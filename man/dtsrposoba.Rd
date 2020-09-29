@@ -68,7 +68,7 @@ For the Jeffreys independent prior, this family of priors generates improper pos
 Posterior density of x=(\eqn{\phi,\nu}) for the reference based, Jeffreys' rule and Jeffreys' independent priors. For the vague the result is the posterior density of x=(\eqn{\phi,\nu,\lambda})
 }
 \references{
-Ordonez, J. A., Prates, M. O., Matos, L. A., and Lachos, V. H. (2020). Objective Bayesian analysis for spatial Student-t regression models. arXiv preprint arXiv:2004.04341.
+Ordonez, J.A, M.O. Prattes, L.A. Matos, and V.H. Lachos (2020+). Objective Bayesian analysis for spatial Student-t regression models (Submitted).
 }
 \author{
 Jose A. Ordonez, Marcos O. Prates, Larissa A. Matos, Victor H. Lachos.

@@ -17,7 +17,7 @@ tsrobapred(obj,xpred,coordspred)
 
   \item{obj}{
 %%     ~~Describe \code{est} here~~
-An object of the class "tsroba" (see \code{\link{tsroba}} function).
+object of the class "tsroba" (see \code{\link{tsroba}} function).
 }
   \item{xpred}{
 %%     ~~Describe \code{xpred} here~~
@@ -39,7 +39,7 @@ This function returns a vector with the predicted values at the specified locati
 \references{
 Diggle, P. and P. Ribeiro (2007).Model-Based Geostatistics.  Springer Series in Statistics.
 
-Ordonez, J. A., Prates, M. O., Matos, L. A., and Lachos, V. H. (2020). Objective Bayesian analysis for spatial Student-t regression models. arXiv preprint arXiv:2004.04341.
+Ordonez, J.A, M.O. Prattes, L.A. Matos, and V.H. Lachos (2020+). Objective Bayesian analysis for spatial Student-t regression models. (Submitted)
 }
 \author{
 Jose A. Ordonez, Marcos O. Prates, Larissa A. Matos, Victor H. Lachos.

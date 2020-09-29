@@ -243,6 +243,113 @@ return(priorcand)
 }
 
 
+
+
+
+#######################################################
+#########densidade priori cjta (phi,nu)=theta1#########
+#######################################################
+
+prioriref2mat=function(covacand,covacandinv,vbetacand,phi,nu,H,kappa,cov.model,tau2,xmat){
+  #covpars=c(sigma,x[1])
+  p=ncol(xmat)
+  ndata=nrow(xmat)
+  nu1=ndata-p
+  nucand=nu
+  sigma=1
+  #cand=covpars
+  #sigma=covpars[1]
+  #phi=covpars[2]
+  phicand=phi
+  #covacand=varcov.spatial(H=H,cov.model=cov.model,cov.pars=cand,nugget=tau2,kappa=kappa)
+  #covacand=covacand+(10e-10*diag(1,ndata))
+
+  derivcovacand=sigma*derivcormatrix1(H,phi=phicand,kappa=kappa,type=cov.model)$dev1
+  #covacandinv=solve(covacand,tol=10e-20)
+  #Pcand=diag(ndata)-(xmat%*%solve(t(xmat)%*%covacandinv%*%xmat)%*%t(xmat)%*%covacandinv)
+  Pcand=diag(ndata)-(xmat%*%vbetacand%*%t(xmat)%*%covacandinv)
+  Wcand=derivcovacand%*%covacandinv%*%Pcand
+
+  ###comp sigma2
+  acand=(nu1*nucand)/(nu1+nucand+2)
+
+  b11cand= (nucand*(nu1))/(nucand-2)
+  b12cand=sum(diag(Wcand))
+  b13cand=((nucand+nu1)/(nucand+nu1+2))-1
+
+
+  #####comp phi sigma
+  b1cand=b11cand*b12cand*b13cand
+
+
+  aest11cand=(nucand^2)/((nucand-2)*(nucand-4))
+  aest12cand= 2*sum(diag(Wcand%*%Wcand))
+  aest13cand=sum(diag(Wcand))^2
+  aestcand= aest11cand*(aest12cand+aest13cand)
+
+  cons1cand=(nu1)/(nucand*(nucand+nu1+2))
+  cons2cand=(nucand+2)/(nucand-2)
+
+  ####comp phi2
+
+  aestcand2= ((cons1cand+1)*aestcand) - (cons2cand*aest13cand)
+
+
+
+  #c1cand=nu1*(nucand+ndata)/(2*nucand*(nucand+nu1))
+  #c2cand= log((nucand+nu1)/nucand)/2
+  c3cand= trigamma((nucand+nu1)/2)-trigamma(nucand/2)
+  c4cand= ((2*nu1)/(nucand))*((nucand+nu1+4)/((nucand+nu1+2)*(nucand+nu1)))
+
+
+
+  ###esperanca nu2######
+
+  ccand=-c3cand-c4cand
+
+  ### comp nu sigma
+
+  ba12cand= -(nu1)/((nucand+nu1+2)*(nucand+nu1))
+
+
+  ####
+
+  #d11cand=(1/(nucand-2))*(1+ log((nucand+nu1)/nucand))
+  d12cand=(nu1)/((nu1+nucand)*(nu1+nucand+2)*(nucand-2))
+
+  ##### comp nu phi
+
+  dcand= d12cand*b12cand
+
+  ############
+
+  #res1cand= acand*aestcand2*ccand + b1cand*dcand*ba12cand
+  #res2cand =(ba12cand^2)*aestcand2 + acand*(dcand^2)+ (b1cand^2)*ccand
+  #rescand=res1cand- 0.5*res2cand
+
+  res1cand= acand*aestcand2*ccand + (16*b1cand*dcand*ba12cand)
+  res2cand =(8*(ba12cand^2)*aestcand2) + (16*acand*(dcand^2))+ (0.5*(b1cand^2)*ccand)
+  rescand=res1cand-res2cand
+
+
+  priorcand=sqrt(rescand)
+
+
+  return(priorcand)
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
 #####################################################################33
 ###########A priori Jeffreys 2#######################################
 #####################################################################
@@ -264,11 +371,11 @@ phicand=phi
 cova=varcov.spatial(H=H,cov.model=cov.model,cov.pars=covpars,nugget=tau2,kappa=kappa)
 #cova=varcov.spatial(coords,cov.model=cov.model,cov.pars=covpars,nugget=tau2,kappa=kappa)$varcov
 
-cova=cova+(10e-10*diag(1,ndata))
+cova=cova+(10e-4*diag(1,ndata))
 
-R=(cova/sigma)-((tau2/sigma)*diag(n)) +(10e-10*diag(1,n))
+#R=(cova/sigma)-((tau2/sigma)*diag(n)) +(10e-4*diag(1,n))
 #R=(cova/sigma)-((tau2/sigma)*diag(n)) +(10e-7*diag(1,n))
-Rinv=solve(R,tol=10e-20)
+#Rinv=solve(R,tol=10e-20)
 covainv=solve(cova,tol=10e-20)
 
 
@@ -278,7 +385,7 @@ derivcova=sigma*derivcormatrix1(H,phi=phi,kappa=kappa,type=cov.model)$dev1
 
 matu=(covainv%*%derivcova)
 
-compbeta=((nu0+n)/(nu0+n+2))*(t(xmat)%*%Rinv%*%xmat)
+compbeta=((nu0+n)/(nu0+n+2))*(t(xmat)%*%covainv%*%xmat)
 
 
 trmatu=sum(diag(matu))
@@ -334,11 +441,11 @@ detcompbeta=det(compbeta)
 
 
 
-#if(detmat2<1e-323){
-#priornuphijef= 0
-#}else{
+if(sqrt(expresion*detcompbeta)<1e-323){
+priornuphijef= 1e-323
+}else{
 priornuphijef= sqrt(detcompbeta*expresion)
-#}
+}
 
 return(priornuphijef)
 }
@@ -369,7 +476,7 @@ covpars=c(sigma,x[1])
 cova=varcov.spatial(H=H,cov.model=cov.model,cov.pars=covpars,nugget=tau2,kappa=kappa)
 #cova=varcov.spatial(coords,cov.model=cov.model,cov.pars=covpars,nugget=tau2,kappa=kappa)$varcov
 
-cova=cova+(10e-12*diag(1,ndata))
+cova=cova+(10e-4*diag(1,ndata))
 
 covainv=solve(cova,tol=10e-20)
 
@@ -698,7 +805,7 @@ return(ms)
 ####Reference and jeffreys independent priors
 #############################################
 
-bayspaestT1=function(candpar,method,xmat,y,proposal,coords,covini,nuini,tau2,kappa,cov.model,aphi,bphi,anu,bnu,burn,iter,thin,prior="refprior"){
+bayspaestT1=function(sdnu=1,method,xmat,y,coords,covini,nuini,tau2,kappa,cov.model,aphi,bphi,anu,bnu,burn,iter,thin,prior="refprior"){
 p=ncol(xmat)
 n=nrow(xmat)
 H=as.matrix(dist(coords,upper=T,diag=T))
@@ -714,10 +821,9 @@ sigmaF=c(covini[1],rep(0,iter))
 phiF=c(covini[2],rep(0,iter))
 nuF=c(nuini,rep(0,iter))
 
-#count=0
+count=0
 countiter=0
-
-if(proposal=="unif"){
+if(n<=501){
 for(j in 2:iter){
 
 ycomp=y
@@ -730,18 +836,19 @@ v=n-p
 phicand=runif(1,aphi,bphi)
 
 nulast=nuF[j-1]
-nucand=rtrunc(1,spec="exp",rate=1/nulast,a=anu,b=bnu)
-
+#nucand=rtrunc(1,spec="exp",rate=1/nulast,a=anu,b=bnu)
+nucand=rtrunc(1,spec="lnorm",meanlog=log(nulast),sdlog=sdnu,a=anu,b=bnu)
 
 cand=c(sigmaF[j-1],phicand)
 Psicand=varcov.spatial(H=H,cov.model=cov.model,cov.pars=cand,nugget=tau2,kappa=kappa)
+
 Rcand=(Psicand/sigmaF[j-1])-((tau2/sigmaF[j-1])*diag(n)) +(10e-4*diag(1,n))
 
-Rcandinv=solve(Rcand)
+Rcandinv=solve(Rcand,tol=10e-20)
 vbetacand<- solve(t(xmat)%*%Rcandinv%*%xmat)
      vbetacand<-(vbetacand+t(vbetacand))/2
 
-mubetacand<-   solve(t(xmat)%*%Rcandinv%*%xmat)%*%t(xmat)%*%Rcandinv%*%ycomp
+mubetacand<-   vbetacand%*%t(xmat)%*%Rcandinv%*%ycomp
 S2cand=t(ycomp-xmat%*%mubetacand)%*%Rcandinv%*%(ycomp-xmat%*%mubetacand)/(n-p)
 
 detrcand=det(Rcand)
@@ -754,11 +861,11 @@ last=c(sigmaF[j-1],phiF[j-1])
 Psilast=varcov.spatial(H=H,cov.model=cov.model,cov.pars=last,nugget=tau2,kappa=kappa)
 
 Rlast=(Psilast/sigmaF[j-1])-((tau2/sigmaF[j-1])*diag(n)) +(10e-4*diag(1,n))
-Rlastinv=solve(Rlast)
+Rlastinv=solve(Rlast,tol=10e-20)
 vbetalast<- solve(t(xmat)%*%Rlastinv%*%xmat)
      vbetalast<-(vbetalast+t(vbetalast))/2
 
-mubetalast<-   solve(t(xmat)%*%Rlastinv%*%xmat)%*%t(xmat)%*%Rlastinv%*%ycomp
+mubetalast<-   vbetalast%*%t(xmat)%*%Rlastinv%*%ycomp
 S2last=t(ycomp-xmat%*%mubetalast)%*%Rlastinv%*%(ycomp-xmat%*%mubetalast)/(n-p)
 
 
@@ -767,29 +874,30 @@ if(detrlast<1e-323){
 detrlast=1e-323
 }
 
-if(prior=="reference"){
-refcand=prioriref2(x=c(phicand,nucand),sigma=1,H=H,kappa=kappa,cov.model=cov.model,tau2=tau2,xmat=xmat)
-reflast=prioriref2(x=c(philast,nulast),sigma=1,H=H,kappa=kappa,cov.model=cov.model,tau2=tau2,xmat=xmat)
-a=1
-}
+#if(prior=="reference"){
+#refcand=prioriref2(x=c(phicand,nucand),sigma=1,H=H,kappa=kappa,cov.model=cov.model,tau2=tau2,xmat=xmat)
+#reflast=prioriref2(x=c(philast,nulast),sigma=1,H=H,kappa=kappa,cov.model=cov.model,tau2=tau2,xmat=xmat)
+  refcand=prioriref2mat(covacand=Rcand,phi=phicand,vbetacand=vbetacand,covacandinv=Rcandinv,nu=nucand,H=H,kappa=kappa,cov.model=cov.model,tau2=tau2,xmat=xmat)
+  reflast=prioriref2mat(covacand=Rlast,phi=philast,vbetacand=vbetalast,covacandinv=Rlastinv,nu=nulast,H=H,kappa=kappa,cov.model=cov.model,tau2=tau2,xmat=xmat)
+  a=1
+#}
 
 
 
-if(prior=="jef.ind"){
-refcand=jefpriortind2(x=c(phicand,nucand),sigma=1,H=H,kappa=kappa,cov.model=cov.model,tau2=tau2)
-reflast=jefpriortind2(x=c(philast,nulast),sigma=1,H=H,kappa=kappa,cov.model=cov.model,tau2=tau2)
-a=1
-}
+#if(prior=="jef.ind"){
+#refcand=jefpriortind2(x=c(phicand,nucand),sigma=1,H=H,kappa=kappa,cov.model=cov.model,tau2=tau2)
+#reflast=jefpriortind2(x=c(philast,nulast),sigma=1,H=H,kappa=kappa,cov.model=cov.model,tau2=tau2)
+#a=1
+#}
+
+priorphicand=(((S2cand)^(-v/2))*sqrt(det(vbetacand))/sqrt(detrcand))*refcand*dtrunc(nulast,spec="lnorm",meanlog=log(nulast),sdlog=sdnu,a=anu,b=bnu)
+#priorphicand=(((S2cand)^(-v/2))*sqrt(det(vbetacand))/sqrt(detrcand))*refcand*dtrunc(nulast,spec="exp",rate=1/nulast,a=anu,b=bnu)
 
 
 
-priorphicand=(((S2cand)^(-v/2))*sqrt(det(vbetacand))/sqrt(detrcand))*refcand*dtrunc(nulast,spec="exp",rate=1/nulast,a=anu,b=bnu)
-#priorphicand=(((S2cand)^(-v/2))*sqrt(det(vbetacand))/sqrt(detrcand))*refcand*dtrunc(nulast,spec="exp",rate=1/nulast,a=anu,b=bnu)*dtrunc(philast, spec="gamma",shape=phiF[j-1],scale=candpar,a=aphi,b=Inf)
+priorphilast=(((S2last)^(-v/2))*sqrt(det(vbetalast))/sqrt(detrlast))*reflast*dtrunc(nucand,spec="lnorm",meanlog=log(nulast),sdlog=sdnu,a=anu,b=bnu)
+#priorphilast=(((S2last)^(-v/2))*sqrt(det(vbetalast))/sqrt(detrlast))*reflast*dtrunc(nucand,spec="exp",rate=1/nulast,a=anu,b=bnu)
 
-
-
-priorphilast=(((S2last)^(-v/2))*sqrt(det(vbetalast))/sqrt(detrlast))*reflast*dtrunc(nucand,spec="exp",rate=1/nulast,a=anu,b=bnu)
-#priorphilast=(((S2last)^(-v/2))*sqrt(det(vbetalast))/sqrt(detrlast))*reflast*dtrunc(nucand,spec="exp",rate=1/nulast,a=anu,b=bnu)*dtrunc(phicand, spec="gamma",shape=phiF[j-1],scale=candpar,a=aphi,b=Inf)
 
 
 
@@ -804,7 +912,7 @@ mubeta=mubetacand
 vbeta=vbetacand
 S2=S2cand
 next.nuF <-nucand
-#count=count+1
+count=count+1
 }else
   {
     next.pi2F <- last
@@ -822,127 +930,138 @@ sigmaF[j]=sigmaaux2*S2
 phiF[j]=next.pi2F[2]
 nuF[j]=next.nuF
 covinii=c(sigmaF[j],phiF[j])
-Psi1=varcov.spatial(H=H,cov.model=cov.model,cov.pars=covinii,nugget=tau2,kappa=kappa)
-Psi1=(Psi1+t(Psi1))/2
+#Psi1=varcov.spatial(H=H,cov.model=cov.model,cov.pars=covinii,nugget=tau2,kappa=kappa)
+#Psi1=(Psi1+t(Psi1))/2
 countiter=countiter+1
-#cat("Iteration ",countiter," of ",iter,"\r")
+cat("Iteration ",countiter," of ",iter,"\r")
 #print(c(betaF[j,],sigmaF[j],phiF[j],nuF[j],j))
 }
 }
 
+else{
+  for(j in 2:iter){
+    ycomp=y
+
+    n=nrow(xmat)
+    p=ncol(xmat)
+    v=n-p
+
+    phicand=runif(1,aphi,bphi)
+    #phicand=rtrunc(1, spec="gamma",shape=phiF[j-1],scale=candpar,a=0,b=Inf)
+    nulast=nuF[j-1]
+    #nucand=rtrunc(1,spec="exp",rate=1/nulast,a=anu,b=bnu)
+    nucand=rtrunc(1,spec="lnorm",meanlog=log(nulast),sdlog=sdnu,a=anu,b=bnu)
+    last=c(sigmaF[j-1],phiF[j-1])
+
+    Psilast=varcov.spatial(H=H,cov.model=cov.model,cov.pars=last,nugget=tau2,kappa=kappa)
+    Rlast=(Psilast/sigmaF[j-1])-((tau2/sigmaF[j-1])*diag(n)) +(10e-4*diag(1,n))
+    Rlastinv=solve(Rlast,tol=10e-20)
+    vbetalast<- solve(t(xmat)%*%Rlastinv%*%xmat)
+    vbetalast<-(vbetalast+t(vbetalast))/2
+    mubetalast<-   solve(t(xmat)%*%Rlastinv%*%xmat)%*%t(xmat)%*%Rlastinv%*%ycomp
+    S2last=t(ycomp-xmat%*%mubetalast)%*%Rlastinv%*%(ycomp-xmat%*%mubetalast)/(n-p)
+
+    sigmacand=S2last*rf(1,nulast,v)
+    sigmalast=sigmaF[j-1]
+    betalast=betaF[j-1,]
+    cand=c(sigmacand,phicand)
+
+    Psicand=varcov.spatial(H=H,cov.model=cov.model,cov.pars=cand,nugget=tau2,kappa=kappa)
+    Rcand=(Psicand/sigmaF[j-1])-((tau2/sigmaF[j-1])*diag(n)) +(10e-4*diag(1,n))
+
+    Rcandinv=solve(Rcand,tol=10e-20)
+    vbetacand<- solve(t(xmat)%*%Rcandinv%*%xmat)
+    vbetacand<-(vbetacand+t(vbetacand))/2
+
+    #mubetacand<-   solve(t(xmat)%*%Rcandinv%*%xmat)%*%t(xmat)%*%Rcandinv%*%ycomp
+    #S2cand=t(ycomp-xmat%*%mubetacand)%*%Rcandinv%*%(ycomp-xmat%*%mubetacand)/(n-p)
+    betacand=t(rmvt(1,mu=t(mubetalast),S=as.numeric(S2last)*vbetalast,df=v))
+
+    covcand=c(sigmacand,phicand)
 
 
-if(proposal=="gamma"){
-for(j in 2:iter){
+    #detrcand=det(Rcand)
+    # if(detrcand<1e-300){
+    #  detrcand=1e-300
+    #}
 
-ycomp=y
-
-n=nrow(xmat)
-p=ncol(xmat)
-v=n-p
-
-phicand=rtrunc(1, spec="gamma",shape=phiF[j-1],scale=candpar,a=0,b=Inf)
-
-nulast=nuF[j-1]
-nucand=rtrunc(1,spec="exp",rate=1/nulast,a=anu,b=bnu)
+    detrlast=det(Rlast)
+    if(detrlast<1e-300){
+      detrlast=1e-300
+    }
 
 
-cand=c(sigmaF[j-1],phicand)
-Psicand=varcov.spatial(H=H,cov.model=cov.model,cov.pars=cand,nugget=tau2,kappa=kappa)
-Rcand=(Psicand/sigmaF[j-1])-((tau2/sigmaF[j-1])*diag(n)) +(10e-4*diag(1,n))
-
-Rcandinv=solve(Rcand)
-vbetacand<- solve(t(xmat)%*%Rcandinv%*%xmat)
-     vbetacand<-(vbetacand+t(vbetacand))/2
-
-mubetacand<-   solve(t(xmat)%*%Rcandinv%*%xmat)%*%t(xmat)%*%Rcandinv%*%ycomp
-S2cand=t(ycomp-xmat%*%mubetacand)%*%Rcandinv%*%(ycomp-xmat%*%mubetacand)/(n-p)
-
-detrcand=det(Rcand)
-if(detrcand<1e-323){
-detrcand=1e-323
-}
-
-philast=phiF[j-1]
-last=c(sigmaF[j-1],phiF[j-1])
-Psilast=varcov.spatial(H=H,cov.model=cov.model,cov.pars=last,nugget=tau2,kappa=kappa)
-
-Rlast=(Psilast/sigmaF[j-1])-((tau2/sigmaF[j-1])*diag(n)) +(10e-4*diag(1,n))
-Rlastinv=solve(Rlast)
-vbetalast<- solve(t(xmat)%*%Rlastinv%*%xmat)
-     vbetalast<-(vbetalast+t(vbetalast))/2
-
-mubetalast<-   solve(t(xmat)%*%Rlastinv%*%xmat)%*%t(xmat)%*%Rlastinv%*%ycomp
-S2last=t(ycomp-xmat%*%mubetalast)%*%Rlastinv%*%(ycomp-xmat%*%mubetalast)/(n-p)
+    sigmalast=last[1]
+    philast=last[2]
+    covlast=c(sigmalast,philast)
 
 
-detrlast=det(Rlast)
-if(detrlast<1e-323){
-detrlast=1e-323
-}
+    refcand=prioriref2mat(covacand=Rcand,phi=phicand,vbetacand=vbetacand,covacandinv=Rcandinv,nu=nucand,H=H,kappa=kappa,cov.model=cov.model,tau2=tau2,xmat=xmat)
+    reflast=prioriref2mat(covacand=Rlast,phi=philast,vbetacand=vbetalast,covacandinv=Rlastinv,nu=nulast,H=H,kappa=kappa,cov.model=cov.model,tau2=tau2,xmat=xmat)
+    a=1
 
-if(prior=="reference"){
-refcand=prioriref2(x=c(phicand,nucand),sigma=1,H=H,kappa=kappa,cov.model=cov.model,tau2=tau2,xmat=xmat)
-reflast=prioriref2(x=c(philast,nulast),sigma=1,H=H,kappa=kappa,cov.model=cov.model,tau2=tau2,xmat=xmat)
-a=1
-}
+    #print(c(detrcand,detrlast,refcand,reflast))
 
+    xbetacand=xmat%*%betacand
+    priorphicand=(dmvt(t(ycomp),mu=t(xbetacand),S=Psicand,df=nucand,log=F)*refcand/(sigmacand^a))*dtrunc(nulast,spec="lnorm",meanlog=log(nulast),sdlog=sdnu,a=anu,b=bnu)*S2last*df(sigmalast,nulast,v)*dmvt(betalast,mu=t(mubetalast),S=as.numeric(S2last)*vbetalast,df=v)
+    #priorphicand=(dmvt(t(ycomp),mu=t(xbeta),S=Psicand,df=nucand,log=F)*refcand/(sigmacand^a))*dtrunc(nulast,spec="exp",rate=1/nulast,a=anu,b=bnu)*S2last*df(sigmalast,nulast,v)*dtrunc(philast, spec="gamma",shape=phiF[j-1],scale=candpar,a=aphi,b=Inf)
+    #priorphicand=(dmvt(t(ycomp),mu=t(xbeta),S=Psicand,df=nucand,log=F)*refcand/(sigmacand^a))*dtrunc(nulast,spec="lnorm",meanlog=log(nulast),sdlog=sdnu,a=anu,b=bnu)*dlnorm(sigmalast,log(sigmalast),sdsigma)
 
+    #priorphicand=(dmvt(t(ycomp),mu=t(xbeta),S=Psicand,df=nucand,log=F)*refcand/(sigmacand^a))*dtrunc(nulast,spec="lnorm",meanlog=log(nulast),sdlog=sdnu,a=anu,b=bnu)*S2last*df(sigmalast,nulast,v)
+    # priorphicand=priorphicand1*refcand*dtrunc(nulast,spec="lnorm",meanlog=log(nulast),sdlog=sdnu,a=anu,b=bnu)*S2last*df(sigmalast,nulast,n)
+    #priorphicand=priorphicand1*refcand*dtrunc(nulast,spec="lnorm",meanlog=log(nulast),sdlog=sdnu,a=anu,b=bnu)*dlnorm(sigmalast,log(sigmalast),sdsigma)
+    ##################################
+    #consint= (t1cand^v1cand)
+    #print(priorphicand)
 
-if(prior=="jef.ind"){
-refcand=jefpriortind2(x=c(phicand,nucand),sigma=1,H=H,kappa=kappa,cov.model=cov.model,tau2=tau2)
-reflast=jefpriortind2(x=c(philast,nulast),sigma=1,H=H,kappa=kappa,cov.model=cov.model,tau2=tau2)
-a=1
-}
+    if(priorphicand<1e-323){
+      priorphicand=1e-323
+    }
 
+    xbetalast=xmat%*%betalast
+    priorphilast=(dmvt(t(ycomp),mu=t(xbetalast),S=Psilast,df=nulast,log=F)*reflast/(sigmalast^a))*dtrunc(nucand,spec="lnorm",meanlog=log(nulast),sdlog=sdnu,a=anu,b=bnu)*S2last*df(sigmacand,nulast,v)*dmvt(betalast,mu=t(mubetalast),S=as.numeric(S2last)*vbetalast,df=v)
+    #priorphilast=(dmvt(t(ycomp),mu=t(xbeta),S=Psilast,df=nulast,log=F)*reflast/(sigmalast^a))*dtrunc(nucand,spec="exp",rate=1/nulast,a=anu,b=bnu)*S2cand*df(sigmacand,nucand,v)*dtrunc(philast, spec="gamma",shape=phiF[j-1],scale=candpar,a=aphi,b=Inf)
+    #priorphilast=(dmvt(t(ycomp),mu=t(xbeta),S=Psilast,df=nulast,log=F)*reflast/(sigmalast^a))*dtrunc(nucand,spec="lnorm",meanlog=log(nulast),sdlog=sdnu,a=anu,b=bnu)*dlnorm(sigmacand,log(sigmalast),sdsigma)
+    #priorphilast=(dmvt(t(ycomp),mu=t(xbeta),S=Psilast,df=nulast,log=F)*reflast/(sigmalast^a))*dtrunc(nucand,spec="lnorm",meanlog=log(nulast),sdlog=sdnu,a=anu,b=bnu)*S2last*df(sigmacand,nulast,v)
 
+    #print(c(priorphicand,priorphilast))
+    Num=priorphicand
+    Den=priorphilast
 
-#priorphicand=(((S2cand)^(-v/2))*sqrt(det(vbetacand))/sqrt(detrcand))*refcand*dtrunc(nulast,spec="exp",rate=1/nulast,a=anu,b=bnu)
-priorphicand=(((S2cand)^(-v/2))*sqrt(det(vbetacand))/sqrt(detrcand))*refcand*dtrunc(nulast,spec="exp",rate=1/nulast,a=anu,b=bnu)*dtrunc(philast, spec="gamma",shape=phiF[j-1],scale=candpar,a=0,b=Inf)
+    unif=runif(1)
+    if(unif<Num/Den)
+    {
+      next.pi2F <- cand
+      next.nuF <-nucand
+      next.sigma=sigmacand
+      betanew=betacand
+      count=count+1
+    }else
+    {
+      next.pi2F <- last
+      next.nuF <- nulast
+      next.sigma=sigmalast
+      betanew=betalast
+    }
 
+    betaF[j,]=betanew
+    sigmaF[j]=next.sigma
+    phiF[j]=next.pi2F[2]
+    nuF[j]=next.nuF
+    covinii=c(sigmaF[j],phiF[j])
 
+    #    Psi1=varcov.spatial(H=H,cov.model=cov.model,cov.pars=covinii,nugget=tau2,kappa=kappa)
+    #   Psi1=(Psi1+t(Psi1))/2
 
-#priorphilast=(((S2last)^(-v/2))*sqrt(det(vbetalast))/sqrt(detrlast))*reflast*dtrunc(nucand,spec="exp",rate=1/nulast,a=anu,b=bnu)
-priorphilast=(((S2last)^(-v/2))*sqrt(det(vbetalast))/sqrt(detrlast))*reflast*dtrunc(nucand,spec="exp",rate=1/nulast,a=anu,b=bnu)*dtrunc(phicand, spec="gamma",shape=phiF[j-1],scale=candpar,a=0,b=Inf)
-
-
-
-Num=priorphicand
-Den=priorphilast
-
-unif=runif(1)
-  if(unif<Num/Den)
-  {
-next.pi2F <- cand
-mubeta=mubetacand
-vbeta=vbetacand
-S2=S2cand
-next.nuF <-nucand
-#count=count+1
-}else
-  {
-    next.pi2F <- last
-next.nuF <- nulast
-  mubeta=mubetalast
-vbeta=vbetalast
-S2=S2last
+    #print(c(betaF[j,],sigmaF[j],phiF[j],nuF[j],j))
+    countiter=countiter+1
+    cat("Iteration ",countiter," of ",iter,"\r")
   }
-
-
-
- betaF[j,]=rmvt(1,mu=t(mubeta),S=as.numeric(S2)*vbeta,df=v)
- sigmaaux2=rf(1,next.nuF,v)
- sigmaF[j]=sigmaaux2*S2
- phiF[j]=next.pi2F[2]
- nuF[j]=next.nuF
- covinii=c(sigmaF[j],phiF[j])
- Psi1=varcov.spatial(H=H,cov.model=cov.model,cov.pars=covinii,nugget=tau2,kappa=kappa)
- Psi1=(Psi1+t(Psi1))/2
- countiter=countiter+1
-# cat("Iteration ",countiter," of ",iter,"\r")
- #print(c(betaF[j,],sigmaF[j],phiF[j],nuF[j],j))
- }
 }
+
+
+
+
 
 betaburn=as.matrix(betaF[(burn+1):iter,])
 betaval=as.matrix(betaburn[seq((burn+1),iter-burn,thin),])
@@ -965,7 +1084,6 @@ mediannu=mlv(nuval)
 theta=c(modebeta,modesigma,modephi,mediannu)
 }
 
-
 if(method=="mean"){
 modebeta=apply(betaval,2,mean)
 modephi=mean(phival)
@@ -987,7 +1105,7 @@ theta=c(modebeta,modesigma,modephi,mediannu)
 
 
 dist=cbind(betaval,sigmaval,phival,nuval)
-return(list(dist=dist,betaF=betaval,sigmaF=sigmaval,phiF=phival,nuF=nuval,coords=coords,nugget=tau2,kappa=kappa,X=xmat,type=cov.model,theta=theta,y=ycomp))
+return(list(prob=count/iter,dist=dist,betaF=betaval,sigmaF=sigmaval,phiF=phival,nuF=nuval,coords=coords,nugget=tau2,kappa=kappa,X=xmat,type=cov.model,theta=theta,y=ycomp))
 }
 
 
@@ -996,7 +1114,7 @@ return(list(dist=dist,betaF=betaval,sigmaF=sigmaval,phiF=phival,nuF=nuval,coords
 #########################################################
 
 
-bayspaestTjef=function(candpar,method,proposal,xmat,y,coords,covini,nuini,tau2,kappa,cov.model,aphi,bphi,anu,bnu,burn,iter,thin){
+bayspaestTjef=function(candpar, prior,sdnu, method,xmat,y,coords,covini,nuini,tau2,kappa,cov.model,aphi,bphi,anu,bnu,burn,iter,thin){
 
 p=ncol(xmat)
 n=nrow(xmat)
@@ -1012,137 +1130,10 @@ betaF[1,]=beta1
 sigmaF=c(covini[1],rep(0,iter))
 phiF=c(covini[2],rep(0,iter))
 nuF=c(nuini,rep(0,iter))
-#count=0
+count=0
 countiter=0
-if(proposal=="gamma"){
-for(j in 2:iter){
-ycomp=y
 
-n=nrow(xmat)
-p=ncol(xmat)
-v=n-p
-
-#phicand=runif(1,aphi,bphi)
-phicand=rtrunc(1, spec="gamma",shape=phiF[j-1],scale=candpar,a=0,b=Inf)
-nulast=nuF[j-1]
-nucand=rtrunc(1,spec="exp",rate=1/nulast,a=anu,b=bnu)
-last=c(sigmaF[j-1],phiF[j-1])
-
-Psilast=varcov.spatial(H=H,cov.model=cov.model,cov.pars=last,nugget=tau2,kappa=kappa)
-Rlast=(Psilast/sigmaF[j-1])-((tau2/sigmaF[j-1])*diag(n)) +(10e-4*diag(1,n))
-Rlastinv=solve(Rlast)
-vbetalast<- solve(t(xmat)%*%Rlastinv%*%xmat)
-     vbetalast<-(vbetalast+t(vbetalast))/2
-mubetalast<-   solve(t(xmat)%*%Rlastinv%*%xmat)%*%t(xmat)%*%Rlastinv%*%ycomp
-S2last=t(ycomp-xmat%*%mubetalast)%*%Rlastinv%*%(ycomp-xmat%*%mubetalast)/(n-p)
-
-sigmacand=S2last*rf(1,nulast,v)
-sigmalast=sigmaF[j-1]
-
-cand=c(sigmacand,phicand)
-
-Psicand=varcov.spatial(H=H,cov.model=cov.model,cov.pars=cand,nugget=tau2,kappa=kappa)
-Rcand=(Psicand/sigmaF[j-1])-((tau2/sigmaF[j-1])*diag(n)) +(10e-4*diag(1,n))
-
-Rcandinv=solve(Rcand)
-vbetacand<- solve(t(xmat)%*%Rcandinv%*%xmat)
-     vbetacand<-(vbetacand+t(vbetacand))/2
-
-mubetacand<-   solve(t(xmat)%*%Rcandinv%*%xmat)%*%t(xmat)%*%Rcandinv%*%ycomp
-S2cand=t(ycomp-xmat%*%mubetacand)%*%Rcandinv%*%(ycomp-xmat%*%mubetacand)/(n-p)
-
-covcand=c(sigmacand,phicand)
-
-
-
-detrcand=det(Rcand)
-if(detrcand<1e-323){
-detrcand=1e-323
-}
-
-
-
-sigmalast=last[1]
-philast=last[2]
-covlast=c(sigmalast,philast)
-
-refcand=jefpriort2(x=c(phicand,nucand),sigma=1,H=H,kappa=kappa,cov.model=cov.model,tau2=tau2,xmat=xmat)
-reflast=jefpriort2(x=c(philast,nulast),sigma=1,H=H,kappa=kappa,cov.model=cov.model,tau2=tau2,xmat=xmat)
-
-
-
-detrlast=det(Rlast)
-if(detrlast<1e-323){
-detrlast=1e-323
-}
-
-
-
-xbeta=xmat%*%betaF[j-1,]
-a=1+p/2
-#priorphicand=(dmvt(t(ycomp),mu=t(xbeta),S=Psicand,df=nucand,log=F)*refcand/(sigmacand^a))*dtrunc(nulast,spec="exp",rate=1/nulast,a=anu,b=bnu)*S2last*df(sigmalast,nulast,v)
-priorphicand=(dmvt(t(ycomp),mu=t(xbeta),S=Psicand,df=nucand,log=F)*refcand/(sigmacand^a))*dtrunc(nulast,spec="exp",rate=1/nulast,a=anu,b=bnu)*S2last*df(sigmalast,nulast,v)*dtrunc(philast, spec="gamma",shape=phiF[j-1],scale=candpar,a=0,b=Inf)
-
-
-
-
-if(priorphicand<1e-323){
-priorphicand=1e-323
-}
-
-
-#priorphilast=(dmvt(t(ycomp),mu=t(xbeta),S=Psilast,df=nulast,log=F)*reflast/(sigmalast^a))*dtrunc(nucand,spec="exp",rate=1/nulast,a=anu,b=bnu)*S2cand*df(sigmacand,nucand,v)
-priorphilast=(dmvt(t(ycomp),mu=t(xbeta),S=Psilast,df=nulast,log=F)*reflast/(sigmalast^a))*dtrunc(nucand,spec="exp",rate=1/nulast,a=anu,b=bnu)*S2cand*df(sigmacand,nucand,v)*dtrunc(philast, spec="gamma",shape=phiF[j-1],scale=candpar,a=0,b=Inf)
-
-
-if(priorphilast<1e-323){
-priorphilast=1e-323
-}
-
-
-
-
-
-Num=priorphicand
-Den=priorphilast
-
-unif=runif(1)
-  if(unif<Num/Den)
-  {
-next.pi2F <- cand
-mubeta=mubetacand
-vbeta=vbetacand
-S2=S2cand
-next.nuF <-nucand
-next.sigma=sigmacand
-#betanew=betacand
-#count=count+1
-  }else
-  {
-    next.pi2F <- last
-next.nuF <- nulast
-next.sigma=sigmalast
-  mubeta=mubetalast
-vbeta=vbetalast
-S2=S2last
- }
-
-betaF[j,]=rmvt(1,mu=t(mubeta),S=as.numeric(S2)*vbeta,df=v)
-sigmaF[j]=next.sigma
-phiF[j]=next.pi2F[2]
-nuF[j]=next.nuF
-covinii=c(sigmaF[j],phiF[j])
-
-Psi1=varcov.spatial(H=H,cov.model=cov.model,cov.pars=covinii,nugget=tau2,kappa=kappa)
-Psi1=(Psi1+t(Psi1))/2
-
-#print(c(betaF[j,],sigmaF[j],phiF[j],nuF[j],j,"J"))
-countiter=countiter+1
-#cat("Iteration ",countiter," of ",iter,"\r")
-}
-}
-
-if(proposal=="unif"){
+if(n<=200){
 for(j in 2:iter){
 ycomp=y
 
@@ -1153,12 +1144,13 @@ v=n-p
 phicand=runif(1,aphi,bphi)
 #phicand=rtrunc(1, spec="gamma",shape=phiF[j-1],scale=candpar,a=0,b=Inf)
 nulast=nuF[j-1]
-nucand=rtrunc(1,spec="exp",rate=1/nulast,a=anu,b=bnu)
+#nucand=rtrunc(1,spec="exp",rate=1/nulast,a=anu,b=bnu)
+nucand=rtrunc(1,spec="lnorm",meanlog=log(nulast),sdlog=sdnu,a=anu,b=bnu)
 last=c(sigmaF[j-1],phiF[j-1])
 
 Psilast=varcov.spatial(H=H,cov.model=cov.model,cov.pars=last,nugget=tau2,kappa=kappa)
 Rlast=(Psilast/sigmaF[j-1])-((tau2/sigmaF[j-1])*diag(n)) +(10e-4*diag(1,n))
-Rlastinv=solve(Rlast)
+Rlastinv=solve(Rlast,tol=10e-20)
 vbetalast<- solve(t(xmat)%*%Rlastinv%*%xmat)
      vbetalast<-(vbetalast+t(vbetalast))/2
 mubetalast<-   solve(t(xmat)%*%Rlastinv%*%xmat)%*%t(xmat)%*%Rlastinv%*%ycomp
@@ -1166,13 +1158,13 @@ S2last=t(ycomp-xmat%*%mubetalast)%*%Rlastinv%*%(ycomp-xmat%*%mubetalast)/(n-p)
 
 sigmacand=S2last*rf(1,nulast,v)
 sigmalast=sigmaF[j-1]
-
+#sigmacand=rlnorm(log(sigmalast),sdsigma)
 cand=c(sigmacand,phicand)
 
 Psicand=varcov.spatial(H=H,cov.model=cov.model,cov.pars=cand,nugget=tau2,kappa=kappa)
 Rcand=(Psicand/sigmaF[j-1])-((tau2/sigmaF[j-1])*diag(n)) +(10e-4*diag(1,n))
 
-Rcandinv=solve(Rcand)
+Rcandinv=solve(Rcand,tol=10e-20)
 vbetacand<- solve(t(xmat)%*%Rcandinv%*%xmat)
      vbetacand<-(vbetacand+t(vbetacand))/2
 
@@ -1182,51 +1174,119 @@ S2cand=t(ycomp-xmat%*%mubetacand)%*%Rcandinv%*%(ycomp-xmat%*%mubetacand)/(n-p)
 covcand=c(sigmacand,phicand)
 
 
-
 detrcand=det(Rcand)
-if(detrcand<1e-323){
-detrcand=1e-323
+if(detrcand<1e-300){
+detrcand=1e-300
 }
 
+detrlast=det(Rlast)
+if(detrlast<1e-300){
+  detrlast=1e-300
+}
 
 
 sigmalast=last[1]
 philast=last[2]
 covlast=c(sigmalast,philast)
 
-refcand=jefpriort2(x=c(phicand,nucand),sigma=1,H=H,kappa=kappa,cov.model=cov.model,tau2=tau2,xmat=xmat)
-reflast=jefpriort2(x=c(philast,nulast),sigma=1,H=H,kappa=kappa,cov.model=cov.model,tau2=tau2,xmat=xmat)
 
-
-
-detrlast=det(Rlast)
-if(detrlast<1e-323){
-detrlast=1e-323
+if(prior=="jef.ind"){
+  refcand=jefpriortind2(x=c(phicand,nucand),sigma=1,H=H,kappa=kappa,cov.model=cov.model,tau2=tau2)
+  reflast=jefpriortind2(x=c(philast,nulast),sigma=1,H=H,kappa=kappa,cov.model=cov.model,tau2=tau2)
+  a=1
 }
 
 
 
-xbeta=xmat%*%betaF[j-1,]
-a=1+p/2
-priorphicand=(dmvt(t(ycomp),mu=t(xbeta),S=Psicand,df=nucand,log=F)*refcand/(sigmacand^a))*dtrunc(nulast,spec="exp",rate=1/nulast,a=anu,b=bnu)*S2last*df(sigmalast,nulast,v)
+
+if(prior=="jef.rul"){
+  refcand=jefpriort2(x=c(phicand,nucand),sigma=1,H=H,kappa=kappa,cov.model=cov.model,tau2=tau2,xmat=xmat)
+  reflast=jefpriort2(x=c(philast,nulast),sigma=1,H=H,kappa=kappa,cov.model=cov.model,tau2=tau2,xmat=xmat)
+  a=1+p/2
+}
+
+
+
+
+
+
+
+
+#print(c(detrcand,detrlast,refcand,reflast))
+
+#xbeta=xmat%*%betaF[j-1,]
+#priorphicand=(dmvt(t(ycomp),mu=t(xbeta),S=Psicand,df=nucand,log=F)*refcand/(sigmacand^a))*dtrunc(nulast,spec="exp",rate=1/nulast,a=anu,b=bnu)*S2last*df(sigmalast,nulast,v)
 #priorphicand=(dmvt(t(ycomp),mu=t(xbeta),S=Psicand,df=nucand,log=F)*refcand/(sigmacand^a))*dtrunc(nulast,spec="exp",rate=1/nulast,a=anu,b=bnu)*S2last*df(sigmalast,nulast,v)*dtrunc(philast, spec="gamma",shape=phiF[j-1],scale=candpar,a=aphi,b=Inf)
+#priorphicand=(dmvt(t(ycomp),mu=t(xbeta),S=Psicand,df=nucand,log=F)*refcand/(sigmacand^a))*dtrunc(nulast,spec="lnorm",meanlog=log(nulast),sdlog=sdnu,a=anu,b=bnu)*dlnorm(sigmalast,log(sigmalast),sdsigma)
 
+#priorphicand=(dmvt(t(ycomp),mu=t(xbeta),S=Psicand,df=nucand,log=F)*refcand/(sigmacand^a))*dtrunc(nulast,spec="lnorm",meanlog=log(nulast),sdlog=sdnu,a=anu,b=bnu)*S2last*df(sigmalast,nulast,v)
 
+#############################
+t1cand= nucand + (v*S2cand/sigmacand)
+v1cand=(nucand+v)/2
 
+if(v1cand>=160){
+  v1cand=160
+  gamma1cand=sqrt(2*pi*(v1cand-1))*(((v1cand-1)/exp(1))^(v1cand-1))
+}
+else{
+  gamma1cand=gamma(v1cand)
+}
+
+t2cand=gamma1cand/gamma(nucand/2)
+t3cand=sigmacand^(-((v/2)+a))
+priorphicand1= t2cand* (t3cand/(t1cand^v1cand))*sqrt(det(vbetacand)/detrcand)*(nucand^(nucand/2))
+
+if(priorphicand1<1e-323){
+  priorphicand1=1e-323
+}
+
+priorphicand=priorphicand1*refcand*dtrunc(nulast,spec="lnorm",meanlog=log(nulast),sdlog=sdnu,a=anu,b=bnu)*S2last*df(sigmalast,nulast,n)
+#priorphicand=priorphicand1*refcand*dtrunc(nulast,spec="lnorm",meanlog=log(nulast),sdlog=sdnu,a=anu,b=bnu)*dlnorm(sigmalast,log(sigmalast),sdsigma)
+##################################
+#consint= (t1cand^v1cand)
+#print(priorphicand)
 
 if(priorphicand<1e-323){
 priorphicand=1e-323
 }
 
 
-priorphilast=(dmvt(t(ycomp),mu=t(xbeta),S=Psilast,df=nulast,log=F)*reflast/(sigmalast^a))*dtrunc(nucand,spec="exp",rate=1/nulast,a=anu,b=bnu)*S2cand*df(sigmacand,nulast,v)
+#priorphilast=(dmvt(t(ycomp),mu=t(xbeta),S=Psilast,df=nulast,log=F)*reflast/(sigmalast^a))*dtrunc(nucand,spec="exp",rate=1/nulast,a=anu,b=bnu)*S2cand*df(sigmacand,nulast,v)
 #priorphilast=(dmvt(t(ycomp),mu=t(xbeta),S=Psilast,df=nulast,log=F)*reflast/(sigmalast^a))*dtrunc(nucand,spec="exp",rate=1/nulast,a=anu,b=bnu)*S2cand*df(sigmacand,nucand,v)*dtrunc(philast, spec="gamma",shape=phiF[j-1],scale=candpar,a=aphi,b=Inf)
+#priorphilast=(dmvt(t(ycomp),mu=t(xbeta),S=Psilast,df=nulast,log=F)*reflast/(sigmalast^a))*dtrunc(nucand,spec="lnorm",meanlog=log(nulast),sdlog=sdnu,a=anu,b=bnu)*dlnorm(sigmacand,log(sigmalast),sdsigma)
+#priorphilast=(dmvt(t(ycomp),mu=t(xbeta),S=Psilast,df=nulast,log=F)*reflast/(sigmalast^a))*dtrunc(nucand,spec="lnorm",meanlog=log(nulast),sdlog=sdnu,a=anu,b=bnu)*S2last*df(sigmacand,nulast,v)
 
+
+#############################
+t1last= nulast + (v*S2last/sigmalast)
+v1last=(nulast+v)/2
+
+if(v1last>=160){
+  v1last=160
+  gamma1last=sqrt(2*pi*(v1last-1))*(((v1last-1)/exp(1))^(v1last-1))
+}
+else{
+  gamma1last=gamma(v1last)
+}
+t2last=gamma(v1last)/gamma(nulast/2)
+t3last=sigmalast^(-((v/2)+a))
+priorphilast1= t2last* (t3last/(t1last^v1last))*sqrt(det(vbetalast)/detrlast)*(nulast^(nulast/2))
+
+if(priorphilast1<1e-323){
+  priorphilast1=1e-323
+}
+
+
+priorphilast=priorphilast1*reflast*dtrunc(nucand,spec="lnorm",meanlog=log(nulast),sdlog=sdnu,a=anu,b=bnu)*S2last*df(sigmacand,nulast,n)
+#priorphilast=priorphilast1*reflast*dtrunc(nucand,spec="lnorm",meanlog=log(nulast),sdlog=sdnu,a=anu,b=bnu)*dlnorm(sigmalast,log(sigmalast),sdsigma)
+##################################
 
 if(priorphilast<1e-323){
 priorphilast=1e-323
 }
 
+#print(c(priorphicand,priorphilast))
 
 
 
@@ -1244,7 +1304,7 @@ S2=S2cand
 next.nuF <-nucand
 next.sigma=sigmacand
 #betanew=betacand
-#count=count+1
+count=count+1
   }else
   {
     next.pi2F <- last
@@ -1266,15 +1326,147 @@ Psi1=(Psi1+t(Psi1))/2
 
 #print(c(betaF[j,],sigmaF[j],phiF[j],nuF[j],j,"J"))
 countiter=countiter+1
-#cat("Iteration ",countiter," of ",iter,"\r")
+cat("Iteration ",countiter," of ",iter,"\r")
 }
 }
+else{
+  for(j in 2:iter){
+    ycomp=y
+
+    n=nrow(xmat)
+    p=ncol(xmat)
+    v=n-p
+
+    phicand=runif(1,aphi,bphi)
+    #phicand=rtrunc(1, spec="gamma",shape=phiF[j-1],scale=candpar,a=0,b=Inf)
+    nulast=nuF[j-1]
+    #nucand=rtrunc(1,spec="exp",rate=1/nulast,a=anu,b=bnu)
+    nucand=rtrunc(1,spec="lnorm",meanlog=log(nulast),sdlog=sdnu,a=anu,b=bnu)
+    last=c(sigmaF[j-1],phiF[j-1])
+
+    Psilast=varcov.spatial(H=H,cov.model=cov.model,cov.pars=last,nugget=tau2,kappa=kappa)
+    Rlast=(Psilast/sigmaF[j-1])-((tau2/sigmaF[j-1])*diag(n)) +(10e-4*diag(1,n))
+    Rlastinv=solve(Rlast,tol=10e-20)
+    vbetalast<- solve(t(xmat)%*%Rlastinv%*%xmat)
+    vbetalast<-(vbetalast+t(vbetalast))/2
+    mubetalast<-   solve(t(xmat)%*%Rlastinv%*%xmat)%*%t(xmat)%*%Rlastinv%*%ycomp
+    S2last=t(ycomp-xmat%*%mubetalast)%*%Rlastinv%*%(ycomp-xmat%*%mubetalast)/(n-p)
+
+    sigmacand=S2last*rf(1,nulast,v)
+    sigmalast=sigmaF[j-1]
+    betalast=betaF[j-1,]
+    cand=c(sigmacand,phicand)
+
+    Psicand=varcov.spatial(H=H,cov.model=cov.model,cov.pars=cand,nugget=tau2,kappa=kappa)
+    #Rcand=(Psicand/sigmaF[j-1])-((tau2/sigmaF[j-1])*diag(n)) +(10e-4*diag(1,n))
+
+    #Rcandinv=solve(Rcand,tol=10e-20)
+    #vbetacand<- solve(t(xmat)%*%Rcandinv%*%xmat)
+    #vbetacand<-(vbetacand+t(vbetacand))/2
+
+    #mubetacand<-   solve(t(xmat)%*%Rcandinv%*%xmat)%*%t(xmat)%*%Rcandinv%*%ycomp
+    #S2cand=t(ycomp-xmat%*%mubetacand)%*%Rcandinv%*%(ycomp-xmat%*%mubetacand)/(n-p)
+    betacand=t(rmvt(1,mu=t(mubetalast),S=as.numeric(S2last)*vbetalast,df=v))
+
+    covcand=c(sigmacand,phicand)
+
+
+    #detrcand=det(Rcand)
+     # if(detrcand<1e-300){
+    #  detrcand=1e-300
+    #}
+
+    detrlast=det(Rlast)
+    if(detrlast<1e-300){
+      detrlast=1e-300
+    }
+
+
+    sigmalast=last[1]
+    philast=last[2]
+    covlast=c(sigmalast,philast)
+
+
+    if(prior=="jef.ind"){
+      refcand=jefpriortind2(x=c(phicand,nucand),sigma=1,H=H,kappa=kappa,cov.model=cov.model,tau2=tau2)
+      reflast=jefpriortind2(x=c(philast,nulast),sigma=1,H=H,kappa=kappa,cov.model=cov.model,tau2=tau2)
+      a=1
+    }
+
+
+
+
+    if(prior=="jef.rul"){
+      refcand=jefpriort2(x=c(phicand,nucand),sigma=1,H=H,kappa=kappa,cov.model=cov.model,tau2=tau2,xmat=xmat)
+      reflast=jefpriort2(x=c(philast,nulast),sigma=1,H=H,kappa=kappa,cov.model=cov.model,tau2=tau2,xmat=xmat)
+      a=1+p/2
+    }
 
 
 
 
 
 
+
+
+    #print(c(detrcand,detrlast,refcand,reflast))
+
+    xbetacand=xmat%*%betacand
+    priorphicand=(dmvt(t(ycomp),mu=t(xbetacand),S=Psicand,df=nucand,log=F)*refcand/(sigmacand^a))*dtrunc(nulast,spec="lnorm",meanlog=log(nulast),sdlog=sdnu,a=anu,b=bnu)*S2last*df(sigmalast,nulast,v)*dmvt(betalast,mu=t(mubetalast),S=as.numeric(S2last)*vbetalast,df=v)
+    #priorphicand=(dmvt(t(ycomp),mu=t(xbeta),S=Psicand,df=nucand,log=F)*refcand/(sigmacand^a))*dtrunc(nulast,spec="exp",rate=1/nulast,a=anu,b=bnu)*S2last*df(sigmalast,nulast,v)*dtrunc(philast, spec="gamma",shape=phiF[j-1],scale=candpar,a=aphi,b=Inf)
+    #priorphicand=(dmvt(t(ycomp),mu=t(xbeta),S=Psicand,df=nucand,log=F)*refcand/(sigmacand^a))*dtrunc(nulast,spec="lnorm",meanlog=log(nulast),sdlog=sdnu,a=anu,b=bnu)*dlnorm(sigmalast,log(sigmalast),sdsigma)
+
+    #priorphicand=(dmvt(t(ycomp),mu=t(xbeta),S=Psicand,df=nucand,log=F)*refcand/(sigmacand^a))*dtrunc(nulast,spec="lnorm",meanlog=log(nulast),sdlog=sdnu,a=anu,b=bnu)*S2last*df(sigmalast,nulast,v)
+   # priorphicand=priorphicand1*refcand*dtrunc(nulast,spec="lnorm",meanlog=log(nulast),sdlog=sdnu,a=anu,b=bnu)*S2last*df(sigmalast,nulast,n)
+    #priorphicand=priorphicand1*refcand*dtrunc(nulast,spec="lnorm",meanlog=log(nulast),sdlog=sdnu,a=anu,b=bnu)*dlnorm(sigmalast,log(sigmalast),sdsigma)
+    ##################################
+    #consint= (t1cand^v1cand)
+    #print(priorphicand)
+
+    if(priorphicand<1e-323){
+      priorphicand=1e-323
+    }
+
+    xbetalast=xmat%*%betalast
+    priorphilast=(dmvt(t(ycomp),mu=t(xbetalast),S=Psilast,df=nulast,log=F)*reflast/(sigmalast^a))*dtrunc(nucand,spec="lnorm",meanlog=log(nulast),sdlog=sdnu,a=anu,b=bnu)*S2last*df(sigmacand,nulast,v)*dmvt(betalast,mu=t(mubetalast),S=as.numeric(S2last)*vbetalast,df=v)
+    #priorphilast=(dmvt(t(ycomp),mu=t(xbeta),S=Psilast,df=nulast,log=F)*reflast/(sigmalast^a))*dtrunc(nucand,spec="exp",rate=1/nulast,a=anu,b=bnu)*S2cand*df(sigmacand,nucand,v)*dtrunc(philast, spec="gamma",shape=phiF[j-1],scale=candpar,a=aphi,b=Inf)
+    #priorphilast=(dmvt(t(ycomp),mu=t(xbeta),S=Psilast,df=nulast,log=F)*reflast/(sigmalast^a))*dtrunc(nucand,spec="lnorm",meanlog=log(nulast),sdlog=sdnu,a=anu,b=bnu)*dlnorm(sigmacand,log(sigmalast),sdsigma)
+    #priorphilast=(dmvt(t(ycomp),mu=t(xbeta),S=Psilast,df=nulast,log=F)*reflast/(sigmalast^a))*dtrunc(nucand,spec="lnorm",meanlog=log(nulast),sdlog=sdnu,a=anu,b=bnu)*S2last*df(sigmacand,nulast,v)
+
+#print(c(priorphicand,priorphilast))
+    Num=priorphicand
+    Den=priorphilast
+
+    unif=runif(1)
+    if(unif<Num/Den)
+    {
+      next.pi2F <- cand
+      next.nuF <-nucand
+      next.sigma=sigmacand
+      betanew=betacand
+      count=count+1
+    }else
+    {
+      next.pi2F <- last
+      next.nuF <- nulast
+      next.sigma=sigmalast
+      betanew=betalast
+    }
+
+    betaF[j,]=betanew
+    sigmaF[j]=next.sigma
+    phiF[j]=next.pi2F[2]
+    nuF[j]=next.nuF
+    covinii=c(sigmaF[j],phiF[j])
+
+#    Psi1=varcov.spatial(H=H,cov.model=cov.model,cov.pars=covinii,nugget=tau2,kappa=kappa)
+ #   Psi1=(Psi1+t(Psi1))/2
+
+    #print(c(betaF[j,],sigmaF[j],phiF[j],nuF[j],j,"J"))
+    countiter=countiter+1
+    cat("Iteration ",countiter," of ",iter,"\r")
+  }
+}
 
 betaburn=as.matrix(betaF[(burn+1):iter,])
 betaval=as.matrix(betaburn[seq((burn+1),iter-burn,thin),])
@@ -1319,7 +1511,7 @@ theta=c(modebeta,modesigma,modephi,mediannu)
 
 
 
-return(list(dist=dist,betaF=betaval,sigmaF=sigmaval,phiF=phival,nuF=nuval,coords=coords,X=xmat,nugget=tau2,kappa=kappa,type=cov.model,theta=theta,y=ycomp))
+return(list(prob=count/iter,dist=dist,betaF=betaval,sigmaF=sigmaval,phiF=phival,nuF=nuval,coords=coords,X=xmat,nugget=tau2,kappa=kappa,type=cov.model,theta=theta,y=ycomp))
 }
 
 
@@ -1346,7 +1538,7 @@ betaF[1,]=beta1
 sigmaF=c(covini[1],rep(0,iter))
 phiF=c(covini[2],rep(0,iter))
 nuF=c(nuini,rep(0,iter))
-#count=0
+count=0
 countiter=0
 for(j in 2:iter){
 ycomp=y
@@ -1369,9 +1561,10 @@ vbetalast<- solve(t(xmat)%*%Rlastinv%*%xmat)
 mubetalast<-   solve(t(xmat)%*%Rlastinv%*%xmat)%*%t(xmat)%*%Rlastinv%*%ycomp
 S2last=t(ycomp-xmat%*%mubetalast)%*%Rlastinv%*%(ycomp-xmat%*%mubetalast)/(n-p)
 
-sigmacand=S2last*rf(1,nulast,v)
+sigmacand=0.5*S2last*rf(1,nulast,n)
 sigmalast=sigmaF[j-1]
-
+betacand=rmvt(1,mu=t(mubetalast),S=as.numeric(S2last)*vbetalast,df=v)
+betalast=betaF[j-1,]
 cand=c(sigmacand,phicand)
 
 Psicand=varcov.spatial(H=H,cov.model=cov.model,cov.pars=cand,nugget=tau2,kappa=kappa)
@@ -1409,7 +1602,7 @@ detrlast=1e-323
 xbeta=xmat%*%betaF[j-1,]
 a=asigma
 #priorphicand=(dmvt(t(ycomp),mu=t(xbeta),S=Psicand,df=nucand,log=F)*refcand/(sigmacand^a))*dtrunc(nulast,spec="exp",rate=1/nulast,a=anu,b=bnu)*S2last*df(sigmalast,nulast,v)
-priorphicand=(dmvt(t(ycomp),mu=t(xbeta),S=Psicand,df=nucand,log=F)/(sigmacand^a))*S2last*df(sigmalast,nulast,v)
+priorphicand=(dmvt(t(ycomp),mu=t(xbeta),S=Psicand,df=nucand,log=F)/(sigmacand^a))*S2last*df(sigmalast,nulast,n)
 
 
 
@@ -1419,7 +1612,7 @@ priorphicand=1e-323
 
 
 #priorphilast=(dmvt(t(ycomp),mu=t(xbeta),S=Psilast,df=nulast,log=F)*reflast/(sigmalast^a))*dtrunc(nucand,spec="exp",rate=1/nulast,a=anu,b=bnu)*S2cand*df(sigmacand,nucand,v)
-priorphilast=(dmvt(t(ycomp),mu=t(xbeta),S=Psilast,df=nulast,log=F)/(sigmalast^a))*S2last*df(sigmacand,nulast,v)
+priorphilast=(dmvt(t(ycomp),mu=t(xbeta),S=Psilast,df=nulast,log=F)/(sigmalast^a))*S2last*df(sigmacand,nulast,n)
 
 if(priorphilast<1e-323){
 priorphilast=1e-323
@@ -1442,7 +1635,7 @@ S2=S2cand
 next.nuF <-nucand
 next.sigma=sigmacand
 #betanew=betacand
-#count=count+1
+count=count+1
   }else
   {
     next.pi2F <- last
@@ -1464,7 +1657,7 @@ Psi1=(Psi1+t(Psi1))/2
 
 #print(c(betaF[j,],sigmaF[j],phiF[j],nuF[j],j,"J"))
 countiter=countiter+1
-#cat("Iteration ",countiter," of ",iter,"\r")
+cat("Iteration ",countiter," of ",iter,"\r")
 }
 
 betaburn=as.matrix(betaF[(burn+1):iter,])
@@ -1509,7 +1702,7 @@ theta=c(modebeta,modesigma,modephi,mediannu)
 
 
 
-return(list(dist=dist,betaF=betaval,sigmaF=sigmaval,phiF=phival,nuF=nuval,coords=coords,X=xmat,nugget=tau2,kappa=kappa,type=cov.model,theta=theta,y=ycomp))
+return(list(prob=count/iter,dist=dist,betaF=betaval,sigmaF=sigmaval,phiF=phival,nuF=nuval,coords=coords,X=xmat,nugget=tau2,kappa=kappa,type=cov.model,theta=theta,y=ycomp))
 }
 
 ###obj(tsroba)
@@ -1553,13 +1746,14 @@ prediction1=function(z,xpred,coordspred,xobs,coordsobs,theta,cov.model,tau2,kapp
   S[lower.tri(S)]=S1[lower.tri(S1)]
   cons1=(nu+nobs)/(nu+nobs-2)
 
-  sdpred=sqrt(diag(cons1*S))
+  #sdpred=sqrt(diag(cons1*S))
   coordspred=coords[pred==1,]
   coordsobs=coords[pred==0,]
-  #amos=rmvt(n=1, S= S, df = nu+nobs, mu =t(prediction))
+  #predict=cbind(prediction,sdpred)
+  amos=rmvt(n=1, S= S, df = nu+nobs, mu =t(prediction))
   #amos=rmvt(n=1, S = S, df = nu+nobs, mu =t(prediction))
   #return(amos)
-  return(prediction)
+  return(amos)
 }
 
 
@@ -1586,9 +1780,12 @@ predictionnorm=function(z,xpred,coordspred,xobs,coordsobs,theta,cov.model,tau2,k
   prediction=(xpred%*%beta)+ ( (Sigma[pred==1,pred==0]%*%solve(Sigma[pred==0,pred==0]))%*%(z-(xobs%*%beta)))
   S=Sigma[pred==1,pred==1]-(Sigma[pred==1,pred==0]%*%solve(Sigma[pred==0,pred==0])%*%Sigma[pred==0,pred==1])
   sdpred=sqrt(diag(S))
+  #predict=
+  amos=rmvnorm(n=1, sigma= S, mean =t(prediction))
+  #amos=rmvn(n=1, Sigma= S, mu =t(prediction))
   coordspred=coords[pred==1,]
   coordsobs=coords[pred==0,]
-  return(prediction)
+  return(amos)
 }
 
 

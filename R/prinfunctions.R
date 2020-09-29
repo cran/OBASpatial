@@ -461,7 +461,7 @@ return(intm)
 ############################################################################
 
 
-nsroba=function(formula,proposal="unif",method="median",candpar,prior="reference",coords.col=1:2,kappa=0.5,cov.model="matern",data,asigma=2.1,intphi="default",ini.pars,burn=500,iter=5000,thin=10){
+nsroba=function(formula,method="median",prior="reference",coords.col=1:2,kappa=0.5,cov.model="matern",data,asigma=2.1,intphi="default",ini.pars,burn=500,iter=5000,thin=10){
 
 #xmat=xmat,proposal=proposal,candpar=candpar,prior=prior,asigma=asigma,y=y,coords=coordstot,covini=cov.ini,nuini=nuini,tau2=0,kappa=kappa,cov.model=cov.model,aphi=aphi,bphi=bphi,burn=burn,iter=iter,thin=thin
 
@@ -472,7 +472,7 @@ if(length(x)!=2) stop("ini.pars must be a numeric vector of length 2")
 if(x[1]<0) stop ("sigma2 must be must be a real number in (0,Inf)")
 if(x[2]<0) stop("Range parameter must be a real number in (0,Inf)")
 if (!(method %in% c("mean","median","mode"))) stop("Estimation methods: mean, median, mode")
-if (!(proposal %in% c("unif","gamma"))) stop("Accepted proposals: unif, gamma")
+#if (!(proposal %in% c("unif","gamma"))) stop("Accepted proposals: unif, gamma")
 
 if(burn%%1 !=0 ) stop("burn must be a positive integer value")
 if(iter%%1 !=0 ) stop("iter must be a positive integer value")
@@ -481,7 +481,7 @@ if(thin%%1 !=0 ) stop("thin must be a positive integer value")
 if(burn> iter) stop("burning cannot be greater than number of iterations")
 if(thin> iter) stop("thin cannot be greater than number of iterations")
 
-if(proposal=="gamma") if(!is.numeric(candpar)) stop("candpar must be a numeric hyperparameter")
+#if(proposal=="gamma") if(!is.numeric(candpar)) stop("candpar must be a numeric hyperparameter")
 
 if (class(formula)!="formula")  stop('The argument formula must be a valid formula')
 
@@ -502,7 +502,7 @@ coords=data[,coords.col]
 H=as.matrix(dist(coords,upper=T,diag=T))
 
 
-if(proposal=="unif"){
+#if(proposal=="unif"){
  if(class(intphi)=="character"){
 if(intphi!="default") stop("A character different of 'default' is not allowed")
 if(cov.model=="spherical") stop("intphi argument must be specified for the spherical covariance case")
@@ -511,8 +511,6 @@ bphi=try(find.phi(d=max(distancias),kappa=kappa,range=c(1e-04,100000),cut=0.05,c
 aphi=try(find.phi(d=min(distancias[distancias!=0]),kappa=kappa,range=c(1e-04,100000),cut=0.05,cov.model=cov.model),silent=T)
 if (class(aphi)=="try-error" | class(bphi)=="try-error") stop("error in calculating intphi by default")
 }
-
-
 
 if(class(intphi)!="character"){
 if(!is.numeric(intphi)) stop("intphi must be a numeric 2 dimension vector")
@@ -524,7 +522,7 @@ aphi=intphi[1]
 bphi=intphi[2]
 }
 
-}
+#}
 
 
 
@@ -532,7 +530,7 @@ bphi=intphi[2]
 
 
 if(prior=="vague"){
-if(proposal=="gamma") stop("For the vague prior, intphi must be specified")
+#if(proposal=="gamma") stop("For the vague prior, intphi must be specified")
 if(!is.numeric(asigma)) stop("asigma must be a real number greater than 2 (proper posterior)")
 if(asigma<=2) stop("asigma must be a real number greater than 2 (proper posterior)")
 }
@@ -555,11 +553,11 @@ tau2=0
 #sigma=1
 
 
-if(proposal=="gamma") res=suppressWarnings(baysparefnorm(xmat=xmat,method=method,proposal=proposal,candpar=candpar,prior=prior,asigma=asigma,y=y,coords=coords,covini=ini.pars,tau2=0,kappa=kappa,cov.model=cov.model,aphi=aphi,bphi=bphi,burn=burn,iter=iter,thin=thin))
-if(proposal=="unif") res=suppressWarnings(baysparefnorm(xmat=xmat,method=method,proposal=proposal,prior=prior,asigma=asigma,y=y,coords=coords,covini=ini.pars,tau2=0,kappa=kappa,cov.model=cov.model,aphi=aphi,bphi=bphi,burn=burn,iter=iter,thin=thin))
+#if(proposal=="gamma") res=suppressWarnings(baysparefnorm(xmat=xmat,method=method,proposal=proposal,candpar=candpar,prior=prior,asigma=asigma,y=y,coords=coords,covini=ini.pars,tau2=0,kappa=kappa,cov.model=cov.model,aphi=aphi,bphi=bphi,burn=burn,iter=iter,thin=thin))
+res=suppressWarnings(baysparefnorm(xmat=xmat,method=method,prior=prior,asigma=asigma,y=y,coords=coords,covini=ini.pars,tau2=0,kappa=kappa,cov.model=cov.model,aphi=aphi,bphi=bphi,burn=burn,iter=iter,thin=thin))
 res$formula=formula
 res$prior=prior
-res$proposal=proposal
+#res$proposal=proposal
 res=res
 
 #if(prior=="jef.ind") warning("The intercept was not considered for the X matrix (improper posterior)")
@@ -575,7 +573,7 @@ return(res)
 ############################################################################
 
 
-tsroba=function(formula,proposal="unif",method="median",candpar,prior="reference",coords.col=1:2,kappa=0.5,cov.model="matern",data,asigma=2.1,intphi="default",intnu="default",ini.pars,burn=500,iter=5000,thin=10){
+tsroba=function(formula,method="median",sdnu=1,prior="reference",coords.col=1:2,kappa=0.5,cov.model="matern",data,asigma=2.1,intphi="default",intnu="default",ini.pars,burn=500,iter=5000,thin=10){
 
 #xmat=xmat,proposal=proposal,candpar=candpar,prior=prior,asigma=asigma,y=y,coords=coordstot,covini=cov.ini,nuini=nuini,tau2=0,kappa=kappa,cov.model=cov.model,aphi=aphi,bphi=bphi,burn=burn,iter=iter,thin=thin
 
@@ -586,11 +584,8 @@ if(length(x)!=3) stop("ini.pars must be a numeric vector of length 3")
 if(x[1]<0) stop ("sigma2 must be must be a real number in (0,Inf)")
 if(x[2]<0) stop("Range parameter must be a real number in (0,Inf)")
 if(x[3]<=4) stop("degrees of freedom must be greater than 4")
+if(sdnu<=0) stop("This parameter corresponds to a standard deviation and must be greater than 0")
 
-
-
-
-if (!(proposal %in% c("unif","gamma"))) stop("Accepted proposals: unif, gamma")
 
 if(burn%%1 !=0 ) stop("burn must be a positive integer value")
 if(iter%%1 !=0 ) stop("iter must be a positive integer value")
@@ -599,7 +594,7 @@ if(thin%%1 !=0 ) stop("thin must be a positive integer value")
 if(burn> iter) stop("burning cannot be greater than number of iterations")
 if(thin> iter) stop("thin cannot be greater than number of iterations")
 
-if(proposal=="gamma") if(!is.numeric(candpar)) stop("candpar must be a numeric hyperparameter")
+#if(proposal=="gamma") if(!is.numeric(candpar)) stop("candpar must be a numeric hyperparameter")
 
 if (class(formula)!="formula")  stop('The argument formula must be a valid formula')
 
@@ -619,8 +614,6 @@ if (!is.data.frame(data)) stop("data must be a data.frame")
 coords=data[,coords.col]
 H=as.matrix(dist(coords,upper=T,diag=T))
 
-
-if(proposal=="unif"){
  if(class(intphi)=="character"){
 if(intphi!="default") stop("A character different of 'default' is not allowed")
 if(cov.model=="spherical") stop("intphi argument must be specified for the spherical covariance case")
@@ -639,7 +632,7 @@ if(intphi[1]<=0 |intphi[2]<=0) stop("Range parameter is greater than 0")
 aphi=intphi[1]
 bphi=intphi[2]
 }
-}
+
 
 if(class(intnu)=="character"){
 if(intnu!="default") stop("A character different of 'default' is not allowed")
@@ -658,7 +651,6 @@ bnu=intnu[2]
 }
 
 if(prior=="vague"){
-if(proposal=="gamma") stop("For the vague prior, intphi must be specified (just unif)")
 if(!is.numeric(asigma)) stop("asigma must be a real number greater than 2 (proper posterior)")
 if(asigma<=2) stop("asigma must be a real number greater than 2 (proper posterior)")
 }
@@ -682,22 +674,14 @@ tau2=0
 
 p=ncol(xmat)
 anujef=max(4,p)
-if(proposal=="unif") {
-if(prior=="reference"| prior=="jef.ind")  res=suppressWarnings(bayspaestT1(xmat=xmat,method=method,proposal=proposal,prior=prior,y=y,coords=coords,covini=ini.pars[1:2],nuini=ini.pars[3],tau2=0,kappa=kappa,cov.model=cov.model,aphi=aphi,bphi=bphi,anu=anu,bnu=bnu,burn=burn,iter=iter,thin=thin))
-if(prior=="jef.rul") res=suppressWarnings(bayspaestTjef(proposal=proposal,xmat=xmat,method=method,y=y,coords=coords,covini=ini.pars[1:2],nuini=ini.pars[3],tau2=0,kappa=kappa,cov.model=cov.model,aphi=aphi,bphi=bphi,anu=anujef,bnu=bnu,burn=burn,iter=iter,thin=thin))
+if(prior=="reference")  res=suppressWarnings(bayspaestT1(xmat=xmat,method=method,y=y,coords=coords,covini=ini.pars[1:2],nuini=ini.pars[3],tau2=0,kappa=kappa,cov.model=cov.model,aphi=aphi,bphi=bphi,anu=anu,bnu=bnu,burn=burn,iter=iter,thin=thin))
+if(prior=="jef.rul"| prior=="jef.ind") res=suppressWarnings(bayspaestTjef(xmat=xmat,prior=prior,method=method,sdnu=sdnu,y=y,coords=coords,covini=ini.pars[1:2],nuini=ini.pars[3],tau2=0,kappa=kappa,cov.model=cov.model,aphi=aphi,bphi=bphi,anu=anujef,bnu=bnu,burn=burn,iter=iter,thin=thin))
 if(prior=="vague")   res= suppressWarnings(bayspaestTvag(xmat=xmat,asigma=asigma,y=y,method=method,coords=coords,covini=ini.pars[1:2],nuini=ini.pars[3],tau2=0,kappa=kappa,cov.model=cov.model,aphi=aphi,bphi=bphi,anu=anu,bnu=bnu,burn=burn,iter=iter,thin=thin))
-}
 
-if(proposal=="gamma") {
-if(prior=="reference"| prior=="jef.ind")  res=suppressWarnings(bayspaestT1(xmat=xmat,proposal=proposal,method=method,candpar=candpar,prior=prior,y=y,coords=coords,covini=ini.pars[1:2],nuini=ini.pars[3],tau2=0,kappa=kappa,cov.model=cov.model,anu=anu,bnu=bnu,burn=burn,iter=iter,thin=thin))
-if(prior=="jef.rul") res=suppressWarnings(bayspaestTjef(candpar=candpar,proposal=proposal,xmat=xmat,y=y,coords=coords,method=method,covini=ini.pars[1:2],nuini=ini.pars[3],tau2=0,kappa=kappa,cov.model=cov.model,anu=anujef,bnu=bnu,burn=burn,iter=iter,thin=thin))
-if(prior=="vague")   res= suppressWarnings(bayspaestTvag(xmat=xmat,asigma=asigma,y=y,coords=coords,method=method,covini=ini.pars[1:2],nuini=ini.pars[3],tau2=0,kappa=kappa,cov.model=cov.model,aphi=aphi,bphi=bphi,anu=anu,bnu=bnu,burn=burn,iter=iter,thin=thin))
-}
 
 #if(prior=="jef.ind") warning("The intercept was not considered for the X matrix (improper posterior)")
 res$formula=formula
 res$prior=prior
-res$proposal=proposal
 res=res
 class(res)="tsroba"
 return(res)
@@ -714,8 +698,15 @@ tsrobapred=function(obj,xpred,coordspred){
   if(nrow(xpred)!=nrow(coordspred)) stop("xpred does not have the same number of lines than coordspred")
   if(sum(is.na(xpred)) > 0) stop("There are some NA values in xpred")
   if(sum(is.na(coordspred)) > 0) stop("There are some NA values in coordspred")
+  #if(obj$prior=="reference"){
   aux=apply(obj$dist,1,FUN=prediction1,xobs=obj$X,z=obj$y,xpred=xpred,coordspred=coordspred,coordsobs=obj$coords,cov.model=obj$type,tau2=0,kappa=obj$kappa)
-  obj.out=apply(aux,1,median)
+  obj.out1=apply(aux,1,median)
+  obj.out2=t(apply(aux,1,FUN=hdi,credMass=0.95))
+  #predictions=predictionnorm(theta=obj$theta,xobs=obj$X,z=obj$y,xpred=xpred,coordspred=coordspred,coordsobs=obj$coords,cov.model=obj$type,tau2=0,kappa=obj$kappa)
+  obj.out=list(pred=obj.out1,intcre=obj.out2)
+  #}else{
+  #obj.out=prediction1(theta=obj$theta,xobs=obj$X,z=obj$y,xpred=xpred,coordspred=coordspred,coordsobs=obj$coords,cov.model=obj$type,tau2=0,kappa=obj$kappa)
+  #}
   return(obj.out)
 }
 
@@ -733,8 +724,11 @@ nsrobapred1=function(xpred,coordspred,obj){
   if(sum(is.na(coordspred)) > 0) stop("There are some NA values in coordspred")
 
   aux=apply(obj$dist,1,FUN=predictionnorm,xobs=obj$X,z=obj$y,xpred=xpred,coordspred=coordspred,coordsobs=obj$coords,cov.model=obj$type,tau2=0,kappa=obj$kappa)
-  obj.out=apply(aux,1,median)
-  return(obj.out)
+  obj.out1=apply(aux,1,median)
+  obj.out2=apply(aux,1,FUN=hdi,credMass=0.95)
+  #predictions=predictionnorm(theta=obj$theta,xobs=obj$X,z=obj$y,xpred=xpred,coordspred=coordspred,coordsobs=obj$coords,cov.model=obj$type,tau2=0,kappa=obj$kappa)
+ obj.out=list(pred=obj.out1,intcre=obj.out2)
+   return(obj.out)
 
 }
 
@@ -756,8 +750,6 @@ summary.nsroba=function(object, ...){
     print(object$formula)
     cat('\n')
     cat("*Prior:",object$prior)
-    cat('\n')
-    cat("*Proposal:",object$proposal)
     cat('\n')
     cat("*Covariance structure:",object$type)
     cat('\n')
@@ -798,8 +790,6 @@ summary.nsroba=function(object, ...){
   print(object$formula)
   cat('\n')
   cat("*Prior:",object$prior)
-  cat('\n')
-  cat("*Proposal:",object$proposal)
   cat('\n')
   cat("*Covariance structure:",object$type)
   cat('\n')

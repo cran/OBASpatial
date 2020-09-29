@@ -20,7 +20,7 @@ Points coordinates to be predicted.
 }
   \item{obj}{
 %%     ~~Describe \code{est} here~~
-An object of the class "nsroba" (see \code{\link{nsroba}} function).
+object of the class "nsroba" (see \code{\link{nsroba}} function).
 }
 }
 \details{

@@ -61,7 +61,7 @@ Denote as \eqn{\bold{c}=(c_{1},c_{2})} the coordinates of a spatial location. \c
 Density of x=(\eqn{\phi,\nu})
 }
 \references{
-Ordonez, J. A., Prates, M. O., Matos, L. A., and Lachos, V. H. (2020). Objective Bayesian analysis for spatial Student-t regression models. arXiv preprint arXiv:2004.04341.
+Ordonez, J.A, M.O. Prattes, L.A. Matos, and V.H. Lachos (2020+). Objective Bayesian analysis for spatial Student-t regression models (Submitted).
 }
 \author{
 Jose A. Ordonez, Marcos O. Prates, Larissa A. Matos, Victor H. Lachos.

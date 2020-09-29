@@ -8,7 +8,7 @@ Bayesian estimation for the TSR model.
 This function performs Bayesian estimation of \eqn{\theta=(\bold{\beta},\sigma^2,\phi)} for the TSR model using the based reference, Jeffreys' rule ,Jeffreys' independent and vague  priors.
 }
 \usage{
-tsroba(formula, proposal="unif", method="median",candpar,
+tsroba(formula, method="median",sdnu=1,
 prior = "reference",coords.col = 1:2,kappa = 0.5,
 cov.model = "matern", data,asigma=2.1, intphi = "default",
 intnu="default",ini.pars,burn=500, iter=5000,thin=10)
@@ -18,17 +18,15 @@ intnu="default",ini.pars,burn=500, iter=5000,thin=10)
   \item{formula}{
 A valid formula for a linear regression model.
 }
-  \item{proposal}{
-  Proposal for \eqn{\phi}, the range parameter. The proposals availables are \code{"unif"} and \code{"gamma"}. See \code{DETAILS} below.
-}
  \item{method}{
   Method to estimate (\eqn{\bold{beta},\sigma,\phi,\nu}). The methods availables are \code{"mean"},\code{"median"} and \code{"mode"}.
 }
-  \item{candpar}{
-Scale parameter when the proposal is \code{"gamma"}, unnecessary when proposal=\code{"uniform"}
+  \item{sdnu}{
+Standard deviation logarithm for the lognormal proposal for \eqn{\nu}
 }
+
   \item{prior}{
-Objective prior densities avaiable for the TSR model: ( \code{reference}: Reference based, \code{jef.rul}: Jeffreys' rule, \code{jef.ind}: Jeffreys' independent).
+Objective prior densities avaiable for the TSR model: ( \code{reference}: Reference based, \code{jef.rul}: Jeffreys' rule, \code{jef.ind}: Jeffreys' independent,\code{vague}: Vague).
 }
  \item{coords.col}{
 A vector with the column numbers corresponding to the spatial coordinates.
@@ -125,9 +123,14 @@ Response variable.
 \item{$prior}{
 Prior density considered.
 }
+
+\item{$prob}{
+Acceptance probability of the MCMC procedure.
+}
+
 }
 \references{
-Ordonez, J. A., Prates, M. O., Matos, L. A., and Lachos, V. H. (2020). Objective Bayesian analysis for spatial Student-t regression models. arXiv preprint arXiv:2004.04341.
+Ordonez, J.A, M.O. Prattes, L.A. Matos, and V.H. Lachos (2020+). Objective Bayesian analysis for spatial Student-t regression models. (Submitted)
 }
 \author{
 Jose A. Ordonez, Marcos O. Prates, Larissa A. Matos, Victor H. Lachos.
@@ -167,25 +170,28 @@ coordspred=dataca20[159:178,1:2]
 
 ######covariance matern: kappa=0.3 prior:reference
 res=tsroba(calcont~altitude+area, kappa = 0.3, data=d1,
-           ini.pars=c(10,3,10))
+           ini.pars=c(10,3,10),iter=10000,burn=500,thin=20)
 
 summary(res)
 
 ######covariance matern: kappa=0.3 prior:jef.rul
 res1=tsroba(calcont~altitude+area, kappa = 0.3,
-            data=d1,prior="jef.rul",ini.pars=c(10,3,10))
+            data=d1,prior="jef.rul",ini.pars=c(10,3,10),
+            iter=10000,burn=500,thin=20)
 
 summary(res1)
 
 ######covariance matern: kappa=0.3 prior:jef.ind
-res2=tsroba(calcont~altitude+area, kappa = 0.3, data=d1,prior="jef.ind",
-ini.pars=c(10,3,10))
+res2=tsroba(calcont~altitude+area, kappa = 0.3, data=d1,
+            prior="jef.ind",ini.pars=c(10,3,10),iter=10000,
+            burn=500,thin=20)
 
 summary(res2)
 
 ######covariance matern: kappa=0.3 prior:vague
-res3=tsroba(calcont~altitude+area, kappa = 0.3, data=d1,prior="vague",
-ini.pars=c(10,3,10))
+res3=tsroba(calcont~altitude+area, kappa = 0.3,
+     data=d1,prior="vague",ini.pars=c(10,3,10),,iter=10000,
+     burn=500,thin=20)
 
 summary(res3)
 

@@ -73,7 +73,7 @@ This quantity can be useful as a criteria for model selection. The computation o
 Marginal density of the model \eqn{m_k} for the reference based, Jeffreys' rule, Jeffreys' independent and vague priors.
 }
 \references{
-Ordonez, J. A., Prates, M. O., Matos, L. A., and Lachos, V. H. (2020). Objective Bayesian analysis for spatial Student-t regression models. arXiv preprint arXiv:2004.04341.
+Ordonez, J.A, M.O. Prattes, L.A. Matos, and V.H. Lachos (2020+). Objective Bayesian analysis for spatial Student-t regression models (Submitted).
 }
 \author{
 Jose A. Ordonez, Marcos O. Prates, Larissa A. Matos, Victor H. Lachos.

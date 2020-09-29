@@ -1,0 +1,8 @@
+2020-10-08 (1.1-7) Alejadro Ordonez <ordonezjosealejandro@gmail.com>, Marcos Prates <marcosop@est.ufmg.br>, Victor Lachos <hlachos@ime.unicamp.br> and Larissa Matos <larissa.amatos@gmail.com>
+
+  * improved the tsroba function fixing a bug in the sampling procedure for big         samples
+
+2020-01-08 (1.1-7) Alejadro Ordonez <ordonezjosealejandro@gmail.com>, Marcos Prates <marcosop@est.ufmg.br>, Victor Lachos <hlachos@ime.unicamp.br> and Larissa Matos <larissa.amatos@gmail.com>
+
+  * improved the tsroba function for the Jeffreys priors (now is faster for these        functions)
+

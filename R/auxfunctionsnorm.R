@@ -289,7 +289,7 @@ return(ms)
 
 ########usando a minha priori######
 
-baysparefnorm=function(candpar,xmat,proposal,method,prior,y,coords,covini,nuini,tau2,kappa,cov.model,aphi,bphi,anu,bnu,burn,iter,thin,asigma){
+baysparefnorm=function(xmat,proposal,method,prior,y,coords,covini,nuini,tau2,kappa,cov.model,aphi,bphi,anu,bnu,burn,iter,thin,asigma){
 p=ncol(xmat)
 n=nrow(xmat)
 H=as.matrix(dist(coords,upper=T,diag=T))
@@ -302,10 +302,10 @@ betaF=matrix(0,iter+1,p)
 betaF[1,]=beta1
 sigmaF=c(covini[1],rep(0,iter))
 phiF=c(covini[2],rep(0,iter))
-#count=0
+count=0
 countiter=0
 
-if(proposal=="unif"){
+#if(proposal=="unif"){
 for(j in 2:iter){
 ycomp=y
 
@@ -380,7 +380,7 @@ priorphicand=(((S2cand)^(-v/2-a+1))*sqrt(det(vbetacand))/sqrt(detrcand))*refcand
 #priorphicand=(((S2cand)^(-v/2-a+1))*sqrt(det(vbetacand))/sqrt(detrcand))*refcand*dtrunc(nulast,spec="exp",rate=1/nulast,a=anu,b=bnu)*dtrunc(philast, spec="gamma",shape=phiF[j-1],scale=candpar,a=aphi,b=Inf)
 
 
-priorphilast=(((S2last)^(-v/2))*sqrt(det(vbetalast))/sqrt(detrlast))*reflast
+priorphilast=(((S2last)^(-v/2-a+1))*sqrt(det(vbetalast))/sqrt(detrlast))*reflast
 #priorphilast=(((S2last)^(-v/2))*sqrt(det(vbetalast))/sqrt(detrlast))*reflast*dtrunc(nucand,spec="exp",rate=1/nulast,a=anu,b=bnu)*dtrunc(phicand, spec="gamma",shape=phiF[j-1],scale=candpar,a=aphi,b=Inf)
 
 
@@ -394,7 +394,7 @@ next.pi2F <- cand
 mubeta=mubetacand
 vbeta=vbetacand
 S2=S2cand
-#count=count+1
+count=count+1
 }else
   {
     next.pi2F <- last
@@ -409,8 +409,8 @@ betaF[j,]=rmvt(1,mu=t(mubeta),S=as.numeric(S2)*vbeta,df=v)
 #betaF[j,]=rmvnorm(1,mean=mubeta,sigma=as.numeric(S2)*vbeta)
 
 #sigmaaux2=rinvchisq(1,next.nuF,scale=S2)
-sigmaF[j]=rinvchisq(1,v,scale=S2)
-
+#sigmaF[j]=rinvchisq(1,v,scale=S2)
+sigmaF[j]=rinvchisq(1,(v+ 2*(a-1)),scale=4*S2)
 phiF[j]=next.pi2F[2]
 covinii=c(sigmaF[j],phiF[j])
 Psi1=varcov.spatial(H=H,cov.model=cov.model,cov.pars=covinii,nugget=tau2,kappa=kappa)
@@ -418,127 +418,9 @@ Psi1=(Psi1+t(Psi1))/2
 
 #print(c(betaF[j,],sigmaF[j],phiF[j],j))
 countiter=countiter+1
-#cat("Iteration ",countiter," of ",iter,"\r")
+cat("Iteration ",countiter," of ",iter,"\r")
 }
-}
-
-
-if(proposal=="gamma"){
-for(j in 2:iter){
-ycomp=y
-
-n=nrow(xmat)
-p=ncol(xmat)
-v=n-p
-
-phicand=rtrunc(1, spec="gamma",shape=phiF[j-1],scale=candpar,a=0,b=Inf)
-#phicand=runif(1,aphi,bphi)
-
-cand=c(sigmaF[j-1],phicand)
-Psicand=varcov.spatial(H=H,cov.model=cov.model,cov.pars=cand,nugget=tau2,kappa=kappa)
-
-Rcand=(Psicand/sigmaF[j-1])-((tau2/sigmaF[j-1])*diag(n)) +(10e-4*diag(1,n))
-
-Rcandinv=solve(Rcand)
-vbetacand<- solve(t(xmat)%*%Rcandinv%*%xmat)
-     vbetacand<-(vbetacand+t(vbetacand))/2
-
-mubetacand<-   solve(t(xmat)%*%Rcandinv%*%xmat)%*%t(xmat)%*%Rcandinv%*%ycomp
-S2cand=t(ycomp-xmat%*%mubetacand)%*%Rcandinv%*%(ycomp-xmat%*%mubetacand)/(n-p)
-
-detrcand=det(Rcand)
-if(detrcand<1e-323){
-detrcand=1e-323
-}
-
-last=c(sigmaF[j-1],phiF[j-1])
-Psilast=varcov.spatial(H=H,cov.model=cov.model,cov.pars=last,nugget=tau2,kappa=kappa)
-
-Rlast=(Psilast/sigmaF[j-1])-((tau2/sigmaF[j-1])*diag(n)) +(10e-4*diag(1,n))
-Rlastinv=solve(Rlast)
-vbetalast<- solve(t(xmat)%*%Rlastinv%*%xmat)
-     vbetalast<-(vbetalast+t(vbetalast))/2
-
-mubetalast<-   solve(t(xmat)%*%Rlastinv%*%xmat)%*%t(xmat)%*%Rlastinv%*%ycomp
-S2last=t(ycomp-xmat%*%mubetalast)%*%Rlastinv%*%(ycomp-xmat%*%mubetalast)/(n-p)
-
-philast=phiF[j-1]
-
-detrlast=det(Rlast)
-if(detrlast<1e-323){
-detrlast=1e-323
-}
-
-if(prior=="reference"){
-reflast=priorirefnorm(H=H,x=philast,sigma=1,kappa=kappa,cov.model=cov.model,tau2=tau2,xmat=xmat)
-refcand=priorirefnorm(H=H,x=phicand,sigma=1,kappa=kappa,cov.model=cov.model,tau2=tau2,xmat=xmat)
-a=1
-}
-
-if(prior=="jef.rul"){
-reflast=priorijefnorm(H=H,x=philast,sigma=1,kappa=kappa,cov.model=cov.model,tau2=tau2,xmat=xmat)
-refcand=priorijefnorm(H=H,x=phicand,sigma=1,kappa=kappa,cov.model=cov.model,tau2=tau2,xmat=xmat)
-a=1+ (p/2)
-}
-
-if(prior=="jef.ind"){
-reflast=priorijefindnorm(H=H,x=philast,sigma=1,kappa=kappa,cov.model=cov.model,tau2=tau2)
-refcand=priorijefindnorm(H=H,x=phicand,sigma=1,kappa=kappa,cov.model=cov.model,tau2=tau2)
-a=1
-}
-
-if(prior=="vague"){
-reflast=dunif(philast,aphi,bphi)
-refcand= dunif(phicand,aphi,bphi)
-a=asigma
-}
-
-
-#priorphicand=(((S2cand)^(-v/2-a+1))*sqrt(det(vbetacand))/sqrt(detrcand))*refcand
-priorphicand=(((S2cand)^(-v/2-a+1))*sqrt(det(vbetacand))/sqrt(detrcand))*refcand*dtrunc(philast, spec="gamma",shape=phiF[j-1],scale=candpar,a=aphi,b=Inf)
-
-
-#priorphilast=(((S2last)^(-v/2))*sqrt(det(vbetalast))/sqrt(detrlast))*reflast
-priorphilast=(((S2last)^(-v/2))*sqrt(det(vbetalast))/sqrt(detrlast))*reflast*dtrunc(phicand, spec="gamma",shape=phiF[j-1],scale=candpar,a=0,b=Inf)
-
-
-Num=priorphicand
-Den=priorphilast
-
-unif=runif(1)
-  if(unif<Num/Den)
-  {
-next.pi2F <- cand
-mubeta=mubetacand
-vbeta=vbetacand
-S2=S2cand
-#count=count+1
-}else
-  {
-    next.pi2F <- last
-  mubeta=mubetalast
-vbeta=vbetalast
-S2=S2last
-  }
-
-
-
-betaF[j,]=rmvt(1,mu=t(mubeta),S=as.numeric(S2)*vbeta,df=v)
-#betaF[j,]=rmvn(1,mean=t(mubeta),sigma=as.numeric(S2)*vbeta)
-
-#sigmaaux2=rinvchisq(1,next.nuF,scale=S2)
-sigmaF[j]=rinvchisq(1,v + 2*(a-1),scale=S2)
-
-phiF[j]=next.pi2F[2]
-covinii=c(sigmaF[j],phiF[j])
-Psi1=varcov.spatial(H=H,cov.model=cov.model,cov.pars=covinii,nugget=tau2,kappa=kappa)
-Psi1=(Psi1+t(Psi1))/2
-
-#print(c(betaF[j,],sigmaF[j],phiF[j],j))
-countiter=countiter+1
-#cat("Iteration ",countiter," of ",iter,"\r")
-}
-}
+#}
 
 betaburn=as.matrix(betaF[(burn+1):iter,])
 betaval=as.matrix(betaburn[seq((burn+1),iter-burn,thin),])
@@ -573,7 +455,7 @@ if(method=="median"){
 }
 
 dist=cbind(betaval,sigmaval,phival)
-return(list(dist=dist,betaF=betaval,sigmaF=sigmaval,phiF=phival,coords=coords,kappa=kappa,X=xmat,type=cov.model,theta=c(modebeta,modesigma,modephi),y=ycomp))
+return(list(prob=count/iter,dist=dist,betaF=betaval,sigmaF=sigmaval,phiF=phival,coords=coords,kappa=kappa,X=xmat,type=cov.model,theta=c(modebeta,modesigma,modephi),y=ycomp))
 }
 
 

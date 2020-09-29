@@ -2,8 +2,8 @@
 \alias{summary.tsroba}
 %- Also NEED an '\alias' for EACH other topic documented here.
 
-\title{Summary of a tsroba object
-Summarize the out put of the stundent-t spatial regression
+\title{Summary of a nsroba object
+%%  ~~function to do ... ~~
 }
 \description{
   \code{summary} method for class "tsroba".
@@ -16,7 +16,7 @@ Summarize the out put of the stundent-t spatial regression
 \arguments{
     \item{object}{
 %%     ~~Describe \code{est} here~~
-An object of the class "tsroba" (see \code{\link{tsroba}} function).
+object of the class "tsroba" (see \code{\link{tsroba}} function).
 }
 
 \item{\dots}{Additional arguments.}
@@ -47,7 +47,7 @@ Sample obtained for \eqn{\nu}.
 
 }
 \references{
-Ordonez, J. A., Prates, M. O., Matos, L. A., and Lachos, V. H. (2020). Objective Bayesian analysis for spatial Student-t regression models. arXiv preprint arXiv:2004.04341.
+Ordonez, J.A, M.O. Prattes, L.A. Matos, and V.H. Lachos (2020+). Objective Bayesian analysis for spatial Student-t regression models. (Submitted)
 }
 \author{
 Jose A. Ordonez, Marcos O. Prates, Larissa A. Matos, Victor H. Lachos.

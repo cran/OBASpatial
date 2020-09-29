@@ -8,7 +8,7 @@ Bayesian estimation for the NSR model.
 This function performs Bayesian estimation of \eqn{\theta=(\bold{\beta},\sigma^2,\phi)} for the NSR model using the based reference, Jeffreys' rule ,Jeffreys' independent and vague  priors.
 }
 \usage{
-nsroba(formula, proposal="unif", method="median",candpar,
+nsroba(formula, method="median",
 prior = "reference",coords.col = 1:2,kappa = 0.5,
 cov.model = "matern", data,asigma=2.1, intphi = "default",
 ini.pars, burn=500, iter=5000, thin=10)
@@ -18,20 +18,14 @@ ini.pars, burn=500, iter=5000, thin=10)
   \item{formula}{
 A valid formula for a linear regression model.
 }
-  \item{proposal}{
-  Proposal for \eqn{\phi}, the range parameter. The proposals availables are \code{"unif"} and \code{"gamma"}. See \code{DETAILS} below.
-}
 
 
   \item{method}{
   Method to estimate (\eqn{\bold{beta},\sigma,\phi}). The methods availables are \code{"mean"},\code{"median"} and \code{"mode"}.
 }
 
-  \item{candpar}{
-Scale parameter when the proposal is \code{"gamma"}, unnecessary when proposal=\code{"uniform"}
-}
   \item{prior}{
-Objective prior densities avaiable for the TSR model: ( \code{reference}: Reference based, \code{jef.rul}: Jeffreys' rule, \code{jef.ind}: Jeffreys' independent).
+Objective prior densities avaiable for the TSR model: ( \code{reference}: Reference based, \code{jef.rul}: Jeffreys' rule, \code{jef.ind}: Jeffreys' independent, \code{vague}, Vague).
 }
  \item{coords.col}{
 A vector with the column numbers corresponding to the spatial coordinates.

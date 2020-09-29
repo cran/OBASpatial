@@ -3,7 +3,7 @@
 %- Also NEED an '\alias' for EACH other topic documented here.
 
 \title{Summary of a nsroba object
-Summarize the out put of the normal spatial regression
+%%  ~~function to do ... ~~
 }
 \description{
   \code{summary} method for class "nsroba".
@@ -16,7 +16,7 @@ Summarize the out put of the normal spatial regression
 \arguments{
     \item{object}{
 %%     ~~Describe \code{est} here~~
-An object of the class "nsroba" (see \code{\link{nsroba}} function).
+object of the class "nsroba" (see \code{\link{nsroba}} function).
 }
 \item{\dots}{Additional arguments.}
    }
