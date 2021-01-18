@@ -46,7 +46,7 @@ Jose A. Ordonez, Marcos O. Prates, Larissa A. Matos, Victor H. Lachos.
 }
 
 \seealso{
-\code{\link{tsroba}},\code{\link{nsrobapred1}}
+\code{\link{tsroba}},\code{\link{nsrobapred}}
 }
 \examples{
 \dontshow{

@@ -1,9 +1,9 @@
 Package: OBASpatial
 Type: Package
 Title: Objective Bayesian Analysis for Spatial Regression Models
-Version: 1.7
+Version: 1.8
 Depends: R (>= 3.6.0)
-Date: 2020-09-29
+Date: 2021-01-18
 Author: Alejandro Ordonez,  Marcos O. Prates , Larissa A. Matos, Victor H. Lachos.
 Maintainer: Alejandro Ordonez <ordonezjosealejandro@gmail.com>
 Imports:
@@ -11,6 +11,6 @@ Imports:
 Description: It makes an objective Bayesian analysis of the spatial regression model using both the normal (NSR) and student-T (TSR) distributions. The functions provided give prior and posterior objective densities and allow default Bayesian estimation of the model regression parameters. Details can be found in Ordonez et al. (2020) <arXiv:2004.04341>.
 License: GPL (>= 2)
 NeedsCompilation: no
-Packaged: 2020-09-29 15:35:28 UTC; alejo
+Packaged: 2021-01-18 17:05:07 UTC; alejo
 Repository: CRAN
-Date/Publication: 2020-09-29 16:10:06 UTC
+Date/Publication: 2021-01-18 17:40:10 UTC

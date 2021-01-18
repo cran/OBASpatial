@@ -1059,19 +1059,18 @@ else{
   }
 }
 
-
-
-
-
+##mudanca por marcos
 betaburn=as.matrix(betaF[(burn+1):iter,])
-betaval=as.matrix(betaburn[seq((burn+1),iter-burn,thin),])
+betaval=as.matrix(betaburn[seq(from=1,to=(iter-burn),by=thin),])
 phiburn=phiF[(burn+1):iter]
-phival=phiburn[seq((burn+1),iter-burn,thin)]
+phival=phiburn[seq(from=1,to=(iter-burn),by=thin)]
 sigmaburn=sigmaF[(burn+1):iter]
-sigmaval=sigmaburn[seq((burn+1),iter-burn,thin)]
+sigmaval=sigmaburn[seq(from=1,to=(iter-burn),by=thin)]
 nuburn=nuF[(burn+1):iter]
-nuval=nuburn[seq((burn+1),iter-burn,thin)]
+nuval=nuburn[seq(from=1,to=iter-burn,by= thin)]
 dist=cbind(betaval,sigmaval,phival,nuval)
+
+
 
 ###estimadores########
 
@@ -1468,14 +1467,16 @@ else{
   }
 }
 
+##mudanca por marcos
 betaburn=as.matrix(betaF[(burn+1):iter,])
-betaval=as.matrix(betaburn[seq((burn+1),iter-burn,thin),])
+betaval=as.matrix(betaburn[seq(from=1,to=(iter-burn),by=thin),])
 phiburn=phiF[(burn+1):iter]
-phival=phiburn[seq((burn+1),iter-burn,thin)]
+phival=phiburn[seq(from=1,to=(iter-burn),by=thin)]
 sigmaburn=sigmaF[(burn+1):iter]
-sigmaval=sigmaburn[seq((burn+1),iter-burn,thin)]
+sigmaval=sigmaburn[seq(from=1,to=(iter-burn),by=thin)]
 nuburn=nuF[(burn+1):iter]
-nuval=nuburn[seq((burn+1),iter-burn,thin)]
+nuval=nuburn[seq(from=1,to=iter-burn,by= thin)]
+
 
 dist=cbind(betaval,sigmaval,phival,nuval)
 
@@ -1660,14 +1661,15 @@ countiter=countiter+1
 cat("Iteration ",countiter," of ",iter,"\r")
 }
 
+##mudanca por marcos
 betaburn=as.matrix(betaF[(burn+1):iter,])
-betaval=as.matrix(betaburn[seq((burn+1),iter-burn,thin),])
+betaval=as.matrix(betaburn[seq(from=1,to=(iter-burn),by=thin),])
 phiburn=phiF[(burn+1):iter]
-phival=phiburn[seq((burn+1),iter-burn,thin)]
+phival=phiburn[seq(from=1,to=(iter-burn),by=thin)]
 sigmaburn=sigmaF[(burn+1):iter]
-sigmaval=sigmaburn[seq((burn+1),iter-burn,thin)]
+sigmaval=sigmaburn[seq(from=1,to=(iter-burn),by=thin)]
 nuburn=nuF[(burn+1):iter]
-nuval=nuburn[seq((burn+1),iter-burn,thin)]
+nuval=nuburn[seq(from=1,to=iter-burn,by= thin)]
 
 dist=cbind(betaval,sigmaval,phival,nuval)
 

@@ -410,7 +410,7 @@ betaF[j,]=rmvt(1,mu=t(mubeta),S=as.numeric(S2)*vbeta,df=v)
 
 #sigmaaux2=rinvchisq(1,next.nuF,scale=S2)
 #sigmaF[j]=rinvchisq(1,v,scale=S2)
-sigmaF[j]=rinvchisq(1,(v+ 2*(a-1)),scale=4*S2)
+sigmaF[j]=rinvchisq(1,(v+ 2*(a-1)),scale=S2)
 phiF[j]=next.pi2F[2]
 covinii=c(sigmaF[j],phiF[j])
 Psi1=varcov.spatial(H=H,cov.model=cov.model,cov.pars=covinii,nugget=tau2,kappa=kappa)
@@ -422,13 +422,15 @@ cat("Iteration ",countiter," of ",iter,"\r")
 }
 #}
 
-betaburn=as.matrix(betaF[(burn+1):iter,])
-betaval=as.matrix(betaburn[seq((burn+1),iter-burn,thin),])
-phiburn=phiF[(burn+1):iter]
-phival=phiburn[seq((burn+1),iter-burn,thin)]
-sigmaburn=sigmaF[(burn+1):iter]
-sigmaval=sigmaburn[seq((burn+1),iter-burn,thin)]
 
+
+##mudanca por marcos
+betaburn=as.matrix(betaF[(burn+1):iter,])
+betaval=as.matrix(betaburn[seq(from=1,to=(iter-burn),by=thin),])
+phiburn=phiF[(burn+1):iter]
+phival=phiburn[seq(from=1,to=(iter-burn),by=thin)]
+sigmaburn=sigmaF[(burn+1):iter]
+sigmaval=sigmaburn[seq(from=1,to=(iter-burn),by=thin)]
 
 
 if(method=="mode"){

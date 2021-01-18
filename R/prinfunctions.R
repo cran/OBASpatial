@@ -711,7 +711,7 @@ tsrobapred=function(obj,xpred,coordspred){
 }
 
 
-nsrobapred1=function(xpred,coordspred,obj){
+nsrobapred=function(xpred,coordspred,obj){
   if(!is.numeric(xpred) & !is.data.frame(xpred)) stop ("xpred must be a numeric matrix or data.frame")
   if(!is.numeric(coordspred) & !is.data.frame(coordspred)) stop ("coordspred must be a numeric matrix or data.frame")
   if (!is.matrix(xpred)) xpred=as.matrix(xpred)

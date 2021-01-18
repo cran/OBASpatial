@@ -1,5 +1,5 @@
-\name{nsrobapred1}
-\alias{nsrobapred1}
+\name{nsrobapred}
+\alias{nsrobapred}
 %- Also NEED an '\alias' for EACH other topic documented here.
 \title{
 Prediction under Normal Objective Bayesian Analysis (OBA).
@@ -8,7 +8,7 @@ Prediction under Normal Objective Bayesian Analysis (OBA).
 This function uses the sampling distribution of parameters obtained from the function \code{tsroba} to predict values at unknown locations.
 }
 \usage{
-nsrobapred1(xpred, coordspred, obj)
+nsrobapred(xpred, coordspred, obj)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -56,7 +56,7 @@ ini.pars=c(10,3),intphi=c(0.8,10),iter=2,burn=0,thin=1)
 
 datapred1=dataelev[43:52,]
 coordspred1=datapred1[,1:2]
-nsrobapred1(obj=reselev,coordspred=coordspred1,xpred=rep(1,10))
+nsrobapred(obj=reselev,coordspred=coordspred1,xpred=rep(1,10))
 }
 
 
@@ -70,6 +70,6 @@ ini.pars=c(10,3),intphi=c(0.8,10))
 
 datapred1=dataelev[43:52,]
 coordspred1=datapred1[,1:2]
-nsrobapred1(obj=reselev,coordspred=coordspred1,xpred=rep(1,10))
+nsrobapred(obj=reselev,coordspred=coordspred1,xpred=rep(1,10))
 }
 }
