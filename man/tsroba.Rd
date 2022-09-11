@@ -11,7 +11,7 @@ This function performs Bayesian estimation of \eqn{\theta=(\bold{\beta},\sigma^2
 tsroba(formula, method="median",sdnu=1,
 prior = "reference",coords.col = 1:2,kappa = 0.5,
 cov.model = "matern", data,asigma=2.1, intphi = "default",
-intnu="default",ini.pars,burn=500, iter=5000,thin=10)
+intnu="default",ini.pars,burn=500, iter=5000,thin=10,cprop = NULL)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -68,9 +68,14 @@ Number of iterations for the sampling procedure.
   \item{thin}{
 Number of observations considered in thin process.
 }
+  \item{cprop}{
+A constant related to the acceptance probability (Default = NULL indicates that cprop is computed as the interval length of intphi). See
+\code{DETAILS} below.
+}
+
 }
 \details{
-For the prior proposal, it was considered the structure \eqn{\pi(\phi,\nu,\lambda)=\phi(\phi)\pi(\nu|\lambda)\pi(\lambda)}. The \code{"unif"} denotes the proposal where a priori, \eqn{\phi} follows an uniform distribution on the interval \code{intphi}, by default, this interval is computed using the empirical range of data.\eqn{\nu|\lambda~ Texp(\lambda,A)} with A the interval given by the argument \code{intnu} and \eqn{\lambda~unif(0.02,0.5)}
+For the prior proposal, it was considered the structure \eqn{\pi(\phi,\nu,\lambda)=\phi(\phi)\pi(\nu|\lambda)\pi(\lambda)}. For the vague  prior, \eqn{\phi} follows an uniform distribution on the interval \code{intphi}, by default, this interval is computed using the empirical range of data as well as the constant \code{cprop}. On the other hand, \eqn{\nu|\lambda~ Texp(\lambda,A)} with A the interval given by the argument \code{intnu} and \eqn{\lambda~unif(0.02,0.5)}
 
 For the Jeffreys independent prior, the sampling procedure generates improper posterior distribution when intercept is considered for the mean function.
 }
@@ -124,10 +129,6 @@ Response variable.
 Prior density considered.
 }
 
-\item{$prob}{
-Acceptance probability of the MCMC procedure.
-}
-
 }
 \references{
 Ordonez, J.A, M.O. Prattes, L.A. Matos, and V.H. Lachos (2020+). Objective Bayesian analysis for spatial Student-t regression models. (Submitted)
@@ -153,7 +154,7 @@ coordspred=dataca20[159:178,1:2]
 
 ######covariance matern: kappa=0.3 prior:reference
 res=tsroba(calcont~altitude+area, kappa = 0.3, data=d1,
-           ini.pars=c(10,3,10),iter=2,burn=0,thin=1)
+           ini.pars=c(10,390,10),iter=2,burn=0,thin=1)
 
 }
 
@@ -170,28 +171,28 @@ coordspred=dataca20[159:178,1:2]
 
 ######covariance matern: kappa=0.3 prior:reference
 res=tsroba(calcont~altitude+area, kappa = 0.3, data=d1,
-           ini.pars=c(10,3,10),iter=10000,burn=500,thin=20)
+           ini.pars=c(10,390,10),iter=11000,burn=1000,thin=10)
 
 summary(res)
 
 ######covariance matern: kappa=0.3 prior:jef.rul
 res1=tsroba(calcont~altitude+area, kappa = 0.3,
-            data=d1,prior="jef.rul",ini.pars=c(10,3,10),
-            iter=10000,burn=500,thin=20)
+            data=d1,prior="jef.rul",ini.pars=c(10,390,10),
+            iter=11000,burn=1000,thin=10)
 
 summary(res1)
 
 ######covariance matern: kappa=0.3 prior:jef.ind
 res2=tsroba(calcont~altitude+area, kappa = 0.3, data=d1,
-            prior="jef.ind",ini.pars=c(10,3,10),iter=10000,
-            burn=500,thin=20)
+            prior="jef.ind",ini.pars=c(10,390,10),iter=11000,
+            burn=1000,thin=10)
 
 summary(res2)
 
 ######covariance matern: kappa=0.3 prior:vague
 res3=tsroba(calcont~altitude+area, kappa = 0.3,
-     data=d1,prior="vague",ini.pars=c(10,3,10),,iter=10000,
-     burn=500,thin=20)
+     data=d1,prior="vague",ini.pars=c(10,390,10),,iter=11000,
+     burn=1000,thin=10)
 
 summary(res3)
 

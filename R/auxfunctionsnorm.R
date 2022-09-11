@@ -289,7 +289,7 @@ return(ms)
 
 ########usando a minha priori######
 
-baysparefnorm=function(xmat,proposal,method,prior,y,coords,covini,nuini,tau2,kappa,cov.model,aphi,bphi,anu,bnu,burn,iter,thin,asigma){
+baysparefnorm=function(xmat,proposal,method,prior,y,coords,covini,nuini,tau2,kappa,cov.model,aphi,bphi,anu,bnu,burn,iter,thin,asigma,cprop){
 p=ncol(xmat)
 n=nrow(xmat)
 H=as.matrix(dist(coords,upper=T,diag=T))
@@ -312,9 +312,14 @@ ycomp=y
 n=nrow(xmat)
 p=ncol(xmat)
 v=n-p
-
+philast=phiF[j-1]
 #phicand=rtrunc(1, spec="gamma",shape=phiF[j-1],scale=candpar,a=aphi,b=Inf)
-phicand=runif(1,aphi,bphi)
+aphiproplast = min(aphi,max(philast-cprop,aphi))
+bphiproplast = max(bphi,min(philast + cprop,bphi))
+
+phicand=runif(1,aphiproplast,bphiproplast)
+aphipropcand = min(aphi,max(aphi,phicand-cprop))
+bphipropcand = max(bphi,min(phicand + cprop,bphi))
 
 cand=c(sigmaF[j-1],phicand)
 Psicand=varcov.spatial(H=H,cov.model=cov.model,cov.pars=cand,nugget=tau2,kappa=kappa)
@@ -376,11 +381,11 @@ a=asigma
 }
 
 
-priorphicand=(((S2cand)^(-v/2-a+1))*sqrt(det(vbetacand))/sqrt(detrcand))*refcand
+priorphicand=(((S2cand)^(-v/2-a+1))*sqrt(det(vbetacand))/sqrt(detrcand))*refcand*dunif(phicand,aphiproplast,bphiproplast)
 #priorphicand=(((S2cand)^(-v/2-a+1))*sqrt(det(vbetacand))/sqrt(detrcand))*refcand*dtrunc(nulast,spec="exp",rate=1/nulast,a=anu,b=bnu)*dtrunc(philast, spec="gamma",shape=phiF[j-1],scale=candpar,a=aphi,b=Inf)
 
 
-priorphilast=(((S2last)^(-v/2-a+1))*sqrt(det(vbetalast))/sqrt(detrlast))*reflast
+priorphilast=(((S2last)^(-v/2-a+1))*sqrt(det(vbetalast))/sqrt(detrlast))*reflast*dunif(phicand,aphiproplast,bphiproplast)
 #priorphilast=(((S2last)^(-v/2))*sqrt(det(vbetalast))/sqrt(detrlast))*reflast*dtrunc(nucand,spec="exp",rate=1/nulast,a=anu,b=bnu)*dtrunc(phicand, spec="gamma",shape=phiF[j-1],scale=candpar,a=aphi,b=Inf)
 
 
@@ -410,7 +415,7 @@ betaF[j,]=rmvt(1,mu=t(mubeta),S=as.numeric(S2)*vbeta,df=v)
 
 #sigmaaux2=rinvchisq(1,next.nuF,scale=S2)
 #sigmaF[j]=rinvchisq(1,v,scale=S2)
-sigmaF[j]=rinvchisq(1,(v+ 2*(a-1)),scale=S2)
+sigmaF[j]=rinvchisq(1,(v+ 2*(a-1)),scale=4*S2)
 phiF[j]=next.pi2F[2]
 covinii=c(sigmaF[j],phiF[j])
 Psi1=varcov.spatial(H=H,cov.model=cov.model,cov.pars=covinii,nugget=tau2,kappa=kappa)
@@ -422,15 +427,13 @@ cat("Iteration ",countiter," of ",iter,"\r")
 }
 #}
 
-
-
-##mudanca por marcos
 betaburn=as.matrix(betaF[(burn+1):iter,])
-betaval=as.matrix(betaburn[seq(from=1,to=(iter-burn),by=thin),])
+betaval=as.matrix(betaburn[seq((burn+1),iter-burn,thin),])
 phiburn=phiF[(burn+1):iter]
-phival=phiburn[seq(from=1,to=(iter-burn),by=thin)]
+phival=phiburn[seq((burn+1),iter-burn,thin)]
 sigmaburn=sigmaF[(burn+1):iter]
-sigmaval=sigmaburn[seq(from=1,to=(iter-burn),by=thin)]
+sigmaval=sigmaburn[seq((burn+1),iter-burn,thin)]
+
 
 
 if(method=="mode"){
@@ -457,7 +460,8 @@ if(method=="median"){
 }
 
 dist=cbind(betaval,sigmaval,phival)
-return(list(prob=count/iter,dist=dist,betaF=betaval,sigmaF=sigmaval,phiF=phival,coords=coords,kappa=kappa,X=xmat,type=cov.model,theta=c(modebeta,modesigma,modephi),y=ycomp))
+#return(list(prob=count/iter,dist=dist,betaF=betaval,sigmaF=sigmaval,phiF=phival,coords=coords,kappa=kappa,X=xmat,type=cov.model,theta=c(modebeta,modesigma,modephi),y=ycomp))
+return(list(dist=dist,betaF=betaval,sigmaF=sigmaval,phiF=phival,coords=coords,kappa=kappa,X=xmat,type=cov.model,theta=c(modebeta,modesigma,modephi),y=ycomp))
 }
 
 

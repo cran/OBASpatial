@@ -20,7 +20,7 @@ This data set contains the calcium content measured in soil samples taken from t
 }
 
 \references{
-Oliveira, M. C. N. (2003). M{\'e}todos de estimac{\~a}o de par{\^a}metros em modelos geoestat{\'i}sticos com diferentes estruturas de covari{\^a}ncias: uma aplicac{\~a}o ao teor de c{\'a}lcio no solo. Ph.D. thesis, ESALQ/USP/Brasil.
+Oliveira, M. C. N. (2003). Metodos de estimacao de parametros em modelos geoestatisticos com diferentes estruturas de covariancias: uma aplicacao ao teor de calcio no solo. Ph.D. thesis, ESALQ/USP/Brasil.
 }
 
 

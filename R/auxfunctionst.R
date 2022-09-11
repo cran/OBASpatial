@@ -805,7 +805,7 @@ return(ms)
 ####Reference and jeffreys independent priors
 #############################################
 
-bayspaestT1=function(sdnu=1,method,xmat,y,coords,covini,nuini,tau2,kappa,cov.model,aphi,bphi,anu,bnu,burn,iter,thin,prior="refprior"){
+bayspaestT1=function(sdnu=1,method,xmat,y,coords,covini,nuini,tau2,kappa,cov.model,aphi,bphi,anu,bnu,burn,iter,thin,prior="refprior",cprop){
 p=ncol(xmat)
 n=nrow(xmat)
 H=as.matrix(dist(coords,upper=T,diag=T))
@@ -824,119 +824,126 @@ nuF=c(nuini,rep(0,iter))
 count=0
 countiter=0
 if(n<=501){
-for(j in 2:iter){
+  for(j in 2:iter){
 
-ycomp=y
+    ycomp=y
 
-n=nrow(xmat)
-p=ncol(xmat)
-v=n-p
+    n=nrow(xmat)
+    p=ncol(xmat)
+    v=n-p
+    philast=phiF[j-1]
+    #phicand=rtrunc(1, spec="gamma",shape=phiF[j-1],scale=candpar,a=aphi,b=Inf)
+    aphiproplast = min(aphi,max(philast-cprop,aphi))
+    bphiproplast = max(bphi,min(philast + cprop,bphi))
 
-#phicand=rtrunc(1, spec="gamma",shape=phiF[j-1],scale=candpar,a=aphi,b=Inf)
-phicand=runif(1,aphi,bphi)
-
-nulast=nuF[j-1]
-#nucand=rtrunc(1,spec="exp",rate=1/nulast,a=anu,b=bnu)
-nucand=rtrunc(1,spec="lnorm",meanlog=log(nulast),sdlog=sdnu,a=anu,b=bnu)
-
-cand=c(sigmaF[j-1],phicand)
-Psicand=varcov.spatial(H=H,cov.model=cov.model,cov.pars=cand,nugget=tau2,kappa=kappa)
-
-Rcand=(Psicand/sigmaF[j-1])-((tau2/sigmaF[j-1])*diag(n)) +(10e-4*diag(1,n))
-
-Rcandinv=solve(Rcand,tol=10e-20)
-vbetacand<- solve(t(xmat)%*%Rcandinv%*%xmat)
-     vbetacand<-(vbetacand+t(vbetacand))/2
-
-mubetacand<-   vbetacand%*%t(xmat)%*%Rcandinv%*%ycomp
-S2cand=t(ycomp-xmat%*%mubetacand)%*%Rcandinv%*%(ycomp-xmat%*%mubetacand)/(n-p)
-
-detrcand=det(Rcand)
-if(detrcand<1e-323){
-detrcand=1e-323
-}
-
-philast=phiF[j-1]
-last=c(sigmaF[j-1],phiF[j-1])
-Psilast=varcov.spatial(H=H,cov.model=cov.model,cov.pars=last,nugget=tau2,kappa=kappa)
-
-Rlast=(Psilast/sigmaF[j-1])-((tau2/sigmaF[j-1])*diag(n)) +(10e-4*diag(1,n))
-Rlastinv=solve(Rlast,tol=10e-20)
-vbetalast<- solve(t(xmat)%*%Rlastinv%*%xmat)
-     vbetalast<-(vbetalast+t(vbetalast))/2
-
-mubetalast<-   vbetalast%*%t(xmat)%*%Rlastinv%*%ycomp
-S2last=t(ycomp-xmat%*%mubetalast)%*%Rlastinv%*%(ycomp-xmat%*%mubetalast)/(n-p)
+    phicand=runif(1,aphiproplast,bphiproplast)
+    aphipropcand = min(aphi,max(aphi,phicand-cprop))
+    bphipropcand = max(bphi,min(phicand + cprop,bphi))
 
 
-detrlast=det(Rlast)
-if(detrlast<1e-323){
-detrlast=1e-323
-}
+    nulast=nuF[j-1]
+    #nucand=rtrunc(1,spec="exp",rate=1/nulast,a=anu,b=bnu)
+    nucand=rtrunc(1,spec="lnorm",meanlog=log(nulast),sdlog=sdnu,a=anu,b=bnu)
 
-#if(prior=="reference"){
-#refcand=prioriref2(x=c(phicand,nucand),sigma=1,H=H,kappa=kappa,cov.model=cov.model,tau2=tau2,xmat=xmat)
-#reflast=prioriref2(x=c(philast,nulast),sigma=1,H=H,kappa=kappa,cov.model=cov.model,tau2=tau2,xmat=xmat)
-  refcand=prioriref2mat(covacand=Rcand,phi=phicand,vbetacand=vbetacand,covacandinv=Rcandinv,nu=nucand,H=H,kappa=kappa,cov.model=cov.model,tau2=tau2,xmat=xmat)
-  reflast=prioriref2mat(covacand=Rlast,phi=philast,vbetacand=vbetalast,covacandinv=Rlastinv,nu=nulast,H=H,kappa=kappa,cov.model=cov.model,tau2=tau2,xmat=xmat)
-  a=1
-#}
+    cand=c(sigmaF[j-1],phicand)
+    Psicand=varcov.spatial(H=H,cov.model=cov.model,cov.pars=cand,nugget=tau2,kappa=kappa)
+
+    Rcand=(Psicand/sigmaF[j-1])-((tau2/sigmaF[j-1])*diag(n)) +(10e-4*diag(1,n))
+
+    Rcandinv=solve(Rcand,tol=10e-20)
+    vbetacand<- solve(t(xmat)%*%Rcandinv%*%xmat)
+    vbetacand<-(vbetacand+t(vbetacand))/2
+
+    mubetacand<-   vbetacand%*%t(xmat)%*%Rcandinv%*%ycomp
+    S2cand=t(ycomp-xmat%*%mubetacand)%*%Rcandinv%*%(ycomp-xmat%*%mubetacand)/(n-p)
+
+    detrcand=det(Rcand)
+    if(detrcand<1e-323){
+      detrcand=1e-323
+    }
+
+    philast=phiF[j-1]
+    last=c(sigmaF[j-1],phiF[j-1])
+    Psilast=varcov.spatial(H=H,cov.model=cov.model,cov.pars=last,nugget=tau2,kappa=kappa)
+
+    Rlast=(Psilast/sigmaF[j-1])-((tau2/sigmaF[j-1])*diag(n)) +(10e-4*diag(1,n))
+    Rlastinv=solve(Rlast,tol=10e-20)
+    vbetalast<- solve(t(xmat)%*%Rlastinv%*%xmat)
+    vbetalast<-(vbetalast+t(vbetalast))/2
+
+    mubetalast<-   vbetalast%*%t(xmat)%*%Rlastinv%*%ycomp
+    S2last=t(ycomp-xmat%*%mubetalast)%*%Rlastinv%*%(ycomp-xmat%*%mubetalast)/(n-p)
 
 
+    detrlast=det(Rlast)
+    if(detrlast<1e-323){
+      detrlast=1e-323
+    }
 
-#if(prior=="jef.ind"){
-#refcand=jefpriortind2(x=c(phicand,nucand),sigma=1,H=H,kappa=kappa,cov.model=cov.model,tau2=tau2)
-#reflast=jefpriortind2(x=c(philast,nulast),sigma=1,H=H,kappa=kappa,cov.model=cov.model,tau2=tau2)
-#a=1
-#}
-
-priorphicand=(((S2cand)^(-v/2))*sqrt(det(vbetacand))/sqrt(detrcand))*refcand*dtrunc(nulast,spec="lnorm",meanlog=log(nulast),sdlog=sdnu,a=anu,b=bnu)
-#priorphicand=(((S2cand)^(-v/2))*sqrt(det(vbetacand))/sqrt(detrcand))*refcand*dtrunc(nulast,spec="exp",rate=1/nulast,a=anu,b=bnu)
+    #if(prior=="reference"){
+    #refcand=prioriref2(x=c(phicand,nucand),sigma=1,H=H,kappa=kappa,cov.model=cov.model,tau2=tau2,xmat=xmat)
+    #reflast=prioriref2(x=c(philast,nulast),sigma=1,H=H,kappa=kappa,cov.model=cov.model,tau2=tau2,xmat=xmat)
+    refcand=prioriref2mat(covacand=Rcand,phi=phicand,vbetacand=vbetacand,covacandinv=Rcandinv,nu=nucand,H=H,kappa=kappa,cov.model=cov.model,tau2=tau2,xmat=xmat)
+    reflast=prioriref2mat(covacand=Rlast,phi=philast,vbetacand=vbetalast,covacandinv=Rlastinv,nu=nulast,H=H,kappa=kappa,cov.model=cov.model,tau2=tau2,xmat=xmat)
+    a=1
+    #}
 
 
 
-priorphilast=(((S2last)^(-v/2))*sqrt(det(vbetalast))/sqrt(detrlast))*reflast*dtrunc(nucand,spec="lnorm",meanlog=log(nulast),sdlog=sdnu,a=anu,b=bnu)
-#priorphilast=(((S2last)^(-v/2))*sqrt(det(vbetalast))/sqrt(detrlast))*reflast*dtrunc(nucand,spec="exp",rate=1/nulast,a=anu,b=bnu)
+    #if(prior=="jef.ind"){
+    #refcand=jefpriortind2(x=c(phicand,nucand),sigma=1,H=H,kappa=kappa,cov.model=cov.model,tau2=tau2)
+    #reflast=jefpriortind2(x=c(philast,nulast),sigma=1,H=H,kappa=kappa,cov.model=cov.model,tau2=tau2)
+    #a=1
+    #}
+
+    priorphicand=(((S2cand)^(-v/2))*sqrt(det(vbetacand))/sqrt(detrcand))*refcand*dtrunc(nulast,spec="lnorm",meanlog=log(nucand),sdlog=sdnu,a=anu,b=bnu)*dunif(philast,aphipropcand,bphipropcand)
+    #priorphicand=(((S2cand)^(-v/2))*sqrt(det(vbetacand))/sqrt(detrcand))*refcand*dtrunc(nulast,spec="exp",rate=1/nulast,a=anu,b=bnu)
+
+
+
+    priorphilast=(((S2last)^(-v/2))*sqrt(det(vbetalast))/sqrt(detrlast))*reflast*dtrunc(nucand,spec="lnorm",meanlog=log(nulast),sdlog=sdnu,a=anu,b=bnu)*dunif(phicand,aphiproplast,bphiproplast)
+    #priorphilast=(((S2last)^(-v/2))*sqrt(det(vbetalast))/sqrt(detrlast))*reflast*dtrunc(nucand,spec="exp",rate=1/nulast,a=anu,b=bnu)
 
 
 
 
-Num=priorphicand
-Den=priorphilast
+    Num=priorphicand
+    Den=priorphilast
 
-unif=runif(1)
-  if(unif<Num/Den)
-  {
-next.pi2F <- cand
-mubeta=mubetacand
-vbeta=vbetacand
-S2=S2cand
-next.nuF <-nucand
-count=count+1
-}else
-  {
-    next.pi2F <- last
-next.nuF <- nulast
-  mubeta=mubetalast
-vbeta=vbetalast
-S2=S2last
+    unif=runif(1)
+    if(unif<Num/Den)
+    {
+      next.pi2F <- cand
+      mubeta=mubetacand
+      vbeta=vbetacand
+      S2=S2cand
+      next.nuF <-nucand
+      count=count+1
+    }else
+    {
+      next.pi2F <- last
+      next.nuF <- nulast
+      mubeta=mubetalast
+      vbeta=vbetalast
+      S2=S2last
+    }
+
+
+
+    betaF[j,]=rmvt(1,mu=t(mubeta),S=as.numeric(S2)*vbeta,df=v)
+    sigmaaux2=rf(1,next.nuF,v)
+    sigmaF[j]=sigmaaux2*S2
+    phiF[j]=next.pi2F[2]
+    nuF[j]=next.nuF
+    covinii=c(sigmaF[j],phiF[j])
+    #Psi1=varcov.spatial(H=H,cov.model=cov.model,cov.pars=covinii,nugget=tau2,kappa=kappa)
+    #Psi1=(Psi1+t(Psi1))/2
+    countiter=countiter+1
+    cat("Iteration ",countiter," of ",iter,"\r")
+    #print(c(betaF[j,],sigmaF[j],phiF[j],nuF[j],j))
   }
-
-
-
-betaF[j,]=rmvt(1,mu=t(mubeta),S=as.numeric(S2)*vbeta,df=v)
-sigmaaux2=rf(1,next.nuF,v)
-sigmaF[j]=sigmaaux2*S2
-phiF[j]=next.pi2F[2]
-nuF[j]=next.nuF
-covinii=c(sigmaF[j],phiF[j])
-#Psi1=varcov.spatial(H=H,cov.model=cov.model,cov.pars=covinii,nugget=tau2,kappa=kappa)
-#Psi1=(Psi1+t(Psi1))/2
-countiter=countiter+1
-cat("Iteration ",countiter," of ",iter,"\r")
-#print(c(betaF[j,],sigmaF[j],phiF[j],nuF[j],j))
 }
-}
+
 
 else{
   for(j in 2:iter){
@@ -946,7 +953,16 @@ else{
     p=ncol(xmat)
     v=n-p
 
-    phicand=runif(1,aphi,bphi)
+    philast=phiF[j-1]
+    #phicand=rtrunc(1, spec="gamma",shape=phiF[j-1],scale=candpar,a=aphi,b=Inf)
+    aphiproplast = min(aphi,max(philast-cprop,aphi))
+    bphiproplast = max(bphi,min(philast + cprop,bphi))
+
+    phicand=runif(1,aphiproplast,bphiproplast)
+    aphipropcand = min(aphi,max(aphi,phicand-cprop))
+    bphipropcand = max(bphi,min(phicand + cprop,bphi))
+
+
     #phicand=rtrunc(1, spec="gamma",shape=phiF[j-1],scale=candpar,a=0,b=Inf)
     nulast=nuF[j-1]
     #nucand=rtrunc(1,spec="exp",rate=1/nulast,a=anu,b=bnu)
@@ -1003,7 +1019,7 @@ else{
     #print(c(detrcand,detrlast,refcand,reflast))
 
     xbetacand=xmat%*%betacand
-    priorphicand=(dmvt(t(ycomp),mu=t(xbetacand),S=Psicand,df=nucand,log=F)*refcand/(sigmacand^a))*dtrunc(nulast,spec="lnorm",meanlog=log(nulast),sdlog=sdnu,a=anu,b=bnu)*S2last*df(sigmalast,nulast,v)*dmvt(betalast,mu=t(mubetalast),S=as.numeric(S2last)*vbetalast,df=v)
+    priorphicand=(dmvt(t(ycomp),mu=t(xbetacand),S=Psicand,df=nucand,log=F)*refcand/(sigmacand^a))*dtrunc(nulast,spec="lnorm",meanlog=log(nucand),sdlog=sdnu,a=anu,b=bnu)*dunif(philast,aphipropcand,bphipropcand)*S2last*df(sigmalast,nucand,v)*dmvt(betalast,mu=t(mubetalast),S=as.numeric(S2last)*vbetalast,df=v)
     #priorphicand=(dmvt(t(ycomp),mu=t(xbeta),S=Psicand,df=nucand,log=F)*refcand/(sigmacand^a))*dtrunc(nulast,spec="exp",rate=1/nulast,a=anu,b=bnu)*S2last*df(sigmalast,nulast,v)*dtrunc(philast, spec="gamma",shape=phiF[j-1],scale=candpar,a=aphi,b=Inf)
     #priorphicand=(dmvt(t(ycomp),mu=t(xbeta),S=Psicand,df=nucand,log=F)*refcand/(sigmacand^a))*dtrunc(nulast,spec="lnorm",meanlog=log(nulast),sdlog=sdnu,a=anu,b=bnu)*dlnorm(sigmalast,log(sigmalast),sdsigma)
 
@@ -1019,7 +1035,7 @@ else{
     }
 
     xbetalast=xmat%*%betalast
-    priorphilast=(dmvt(t(ycomp),mu=t(xbetalast),S=Psilast,df=nulast,log=F)*reflast/(sigmalast^a))*dtrunc(nucand,spec="lnorm",meanlog=log(nulast),sdlog=sdnu,a=anu,b=bnu)*S2last*df(sigmacand,nulast,v)*dmvt(betalast,mu=t(mubetalast),S=as.numeric(S2last)*vbetalast,df=v)
+    priorphilast=(dmvt(t(ycomp),mu=t(xbetalast),S=Psilast,df=nulast,log=F)*reflast/(sigmalast^a))*dtrunc(nucand,spec="lnorm",meanlog=log(nulast),sdlog=sdnu,a=anu,b=bnu)*dunif(phicand,aphiproplast,bphiproplast)*S2last*df(sigmacand,nulast,v)*dmvt(betalast,mu=t(mubetalast),S=as.numeric(S2last)*vbetalast,df=v)
     #priorphilast=(dmvt(t(ycomp),mu=t(xbeta),S=Psilast,df=nulast,log=F)*reflast/(sigmalast^a))*dtrunc(nucand,spec="exp",rate=1/nulast,a=anu,b=bnu)*S2cand*df(sigmacand,nucand,v)*dtrunc(philast, spec="gamma",shape=phiF[j-1],scale=candpar,a=aphi,b=Inf)
     #priorphilast=(dmvt(t(ycomp),mu=t(xbeta),S=Psilast,df=nulast,log=F)*reflast/(sigmalast^a))*dtrunc(nucand,spec="lnorm",meanlog=log(nulast),sdlog=sdnu,a=anu,b=bnu)*dlnorm(sigmacand,log(sigmalast),sdsigma)
     #priorphilast=(dmvt(t(ycomp),mu=t(xbeta),S=Psilast,df=nulast,log=F)*reflast/(sigmalast^a))*dtrunc(nucand,spec="lnorm",meanlog=log(nulast),sdlog=sdnu,a=anu,b=bnu)*S2last*df(sigmacand,nulast,v)
@@ -1059,18 +1075,19 @@ else{
   }
 }
 
-##mudanca por marcos
+
+
+
+
 betaburn=as.matrix(betaF[(burn+1):iter,])
-betaval=as.matrix(betaburn[seq(from=1,to=(iter-burn),by=thin),])
+betaval=as.matrix(betaburn[seq((burn+1),iter-burn,thin),])
 phiburn=phiF[(burn+1):iter]
-phival=phiburn[seq(from=1,to=(iter-burn),by=thin)]
+phival=phiburn[seq((burn+1),iter-burn,thin)]
 sigmaburn=sigmaF[(burn+1):iter]
-sigmaval=sigmaburn[seq(from=1,to=(iter-burn),by=thin)]
+sigmaval=sigmaburn[seq((burn+1),iter-burn,thin)]
 nuburn=nuF[(burn+1):iter]
-nuval=nuburn[seq(from=1,to=iter-burn,by= thin)]
+nuval=nuburn[seq((burn+1),iter-burn,thin)]
 dist=cbind(betaval,sigmaval,phival,nuval)
-
-
 
 ###estimadores########
 
@@ -1104,7 +1121,9 @@ theta=c(modebeta,modesigma,modephi,mediannu)
 
 
 dist=cbind(betaval,sigmaval,phival,nuval)
-return(list(prob=count/iter,dist=dist,betaF=betaval,sigmaF=sigmaval,phiF=phival,nuF=nuval,coords=coords,nugget=tau2,kappa=kappa,X=xmat,type=cov.model,theta=theta,y=ycomp))
+#return(list(prob=count/iter,dist=dist,betaF=betaval,sigmaF=sigmaval,phiF=phival,nuF=nuval,coords=coords,nugget=tau2,kappa=kappa,X=xmat,type=cov.model,theta=theta,y=ycomp))
+
+return(list(dist=dist,betaF=betaval,sigmaF=sigmaval,phiF=phival,nuF=nuval,coords=coords,nugget=tau2,kappa=kappa,X=xmat,type=cov.model,theta=theta,y=ycomp))
 }
 
 
@@ -1113,7 +1132,7 @@ return(list(prob=count/iter,dist=dist,betaF=betaval,sigmaF=sigmaval,phiF=phival,
 #########################################################
 
 
-bayspaestTjef=function(candpar, prior,sdnu, method,xmat,y,coords,covini,nuini,tau2,kappa,cov.model,aphi,bphi,anu,bnu,burn,iter,thin){
+bayspaestTjef=function(candpar, prior,sdnu, method,xmat,y,coords,covini,nuini,tau2,kappa,cov.model,aphi,bphi,anu,bnu,burn,iter,thin,cprop){
 
 p=ncol(xmat)
 n=nrow(xmat)
@@ -1139,8 +1158,14 @@ ycomp=y
 n=nrow(xmat)
 p=ncol(xmat)
 v=n-p
+philast=phiF[j-1]
+aphiproplast = min(aphi,max(philast-cprop,aphi))
+bphiproplast = max(bphi,min(philast + cprop,bphi))
 
-phicand=runif(1,aphi,bphi)
+phicand=runif(1,aphiproplast,bphiproplast)
+aphipropcand = min(aphi,max(aphi,phicand-cprop))
+bphipropcand = max(bphi,min(phicand + cprop,bphi))
+
 #phicand=rtrunc(1, spec="gamma",shape=phiF[j-1],scale=candpar,a=0,b=Inf)
 nulast=nuF[j-1]
 #nucand=rtrunc(1,spec="exp",rate=1/nulast,a=anu,b=bnu)
@@ -1240,7 +1265,7 @@ if(priorphicand1<1e-323){
   priorphicand1=1e-323
 }
 
-priorphicand=priorphicand1*refcand*dtrunc(nulast,spec="lnorm",meanlog=log(nulast),sdlog=sdnu,a=anu,b=bnu)*S2last*df(sigmalast,nulast,n)
+priorphicand=priorphicand1*refcand*dtrunc(nulast,spec="lnorm",meanlog=log(nucand),sdlog=sdnu,a=anu,b=bnu)*dunif(philast,aphipropcand,bphipropcand)*S2last*df(sigmalast,nucand,n)
 #priorphicand=priorphicand1*refcand*dtrunc(nulast,spec="lnorm",meanlog=log(nulast),sdlog=sdnu,a=anu,b=bnu)*dlnorm(sigmalast,log(sigmalast),sdsigma)
 ##################################
 #consint= (t1cand^v1cand)
@@ -1277,7 +1302,7 @@ if(priorphilast1<1e-323){
 }
 
 
-priorphilast=priorphilast1*reflast*dtrunc(nucand,spec="lnorm",meanlog=log(nulast),sdlog=sdnu,a=anu,b=bnu)*S2last*df(sigmacand,nulast,n)
+priorphilast=priorphilast1*reflast*dtrunc(nucand,spec="lnorm",meanlog=log(nulast),sdlog=sdnu,a=anu,b=bnu)*dunif(phicand,aphiproplast,bphiproplast)*S2last*df(sigmacand,nulast,n)
 #priorphilast=priorphilast1*reflast*dtrunc(nucand,spec="lnorm",meanlog=log(nulast),sdlog=sdnu,a=anu,b=bnu)*dlnorm(sigmalast,log(sigmalast),sdsigma)
 ##################################
 
@@ -1335,8 +1360,14 @@ else{
     n=nrow(xmat)
     p=ncol(xmat)
     v=n-p
+    philast=phiF[j-1]
+    aphiproplast = min(aphi,max(philast-cprop,aphi))
+    bphiproplast = max(bphi,min(philast + cprop,bphi))
 
-    phicand=runif(1,aphi,bphi)
+    phicand=runif(1,aphiproplast,bphiproplast)
+    aphipropcand = min(aphi,max(aphi,phicand-cprop))
+    bphipropcand = max(bphi,min(phicand + cprop,bphi))
+
     #phicand=rtrunc(1, spec="gamma",shape=phiF[j-1],scale=candpar,a=0,b=Inf)
     nulast=nuF[j-1]
     #nucand=rtrunc(1,spec="exp",rate=1/nulast,a=anu,b=bnu)
@@ -1411,7 +1442,7 @@ else{
     #print(c(detrcand,detrlast,refcand,reflast))
 
     xbetacand=xmat%*%betacand
-    priorphicand=(dmvt(t(ycomp),mu=t(xbetacand),S=Psicand,df=nucand,log=F)*refcand/(sigmacand^a))*dtrunc(nulast,spec="lnorm",meanlog=log(nulast),sdlog=sdnu,a=anu,b=bnu)*S2last*df(sigmalast,nulast,v)*dmvt(betalast,mu=t(mubetalast),S=as.numeric(S2last)*vbetalast,df=v)
+    priorphicand=(dmvt(t(ycomp),mu=t(xbetacand),S=Psicand,df=nucand,log=F)*refcand/(sigmacand^a))*dtrunc(nulast,spec="lnorm",meanlog=log(nucand),sdlog=sdnu,a=anu,b=bnu)*dunif(philast,aphipropcand,bphipropcand)*S2last*df(sigmalast,nucand,v)*dmvt(betalast,mu=t(mubetalast),S=as.numeric(S2last)*vbetalast,df=v)
     #priorphicand=(dmvt(t(ycomp),mu=t(xbeta),S=Psicand,df=nucand,log=F)*refcand/(sigmacand^a))*dtrunc(nulast,spec="exp",rate=1/nulast,a=anu,b=bnu)*S2last*df(sigmalast,nulast,v)*dtrunc(philast, spec="gamma",shape=phiF[j-1],scale=candpar,a=aphi,b=Inf)
     #priorphicand=(dmvt(t(ycomp),mu=t(xbeta),S=Psicand,df=nucand,log=F)*refcand/(sigmacand^a))*dtrunc(nulast,spec="lnorm",meanlog=log(nulast),sdlog=sdnu,a=anu,b=bnu)*dlnorm(sigmalast,log(sigmalast),sdsigma)
 
@@ -1427,7 +1458,7 @@ else{
     }
 
     xbetalast=xmat%*%betalast
-    priorphilast=(dmvt(t(ycomp),mu=t(xbetalast),S=Psilast,df=nulast,log=F)*reflast/(sigmalast^a))*dtrunc(nucand,spec="lnorm",meanlog=log(nulast),sdlog=sdnu,a=anu,b=bnu)*S2last*df(sigmacand,nulast,v)*dmvt(betalast,mu=t(mubetalast),S=as.numeric(S2last)*vbetalast,df=v)
+    priorphilast=(dmvt(t(ycomp),mu=t(xbetalast),S=Psilast,df=nulast,log=F)*reflast/(sigmalast^a))*dtrunc(nucand,spec="lnorm",meanlog=log(nulast),sdlog=sdnu,a=anu,b=bnu)*dunif(phicand,aphiproplast,bphiproplast)*S2last*df(sigmacand,nulast,v)*dmvt(betalast,mu=t(mubetalast),S=as.numeric(S2last)*vbetalast,df=v)
     #priorphilast=(dmvt(t(ycomp),mu=t(xbeta),S=Psilast,df=nulast,log=F)*reflast/(sigmalast^a))*dtrunc(nucand,spec="exp",rate=1/nulast,a=anu,b=bnu)*S2cand*df(sigmacand,nucand,v)*dtrunc(philast, spec="gamma",shape=phiF[j-1],scale=candpar,a=aphi,b=Inf)
     #priorphilast=(dmvt(t(ycomp),mu=t(xbeta),S=Psilast,df=nulast,log=F)*reflast/(sigmalast^a))*dtrunc(nucand,spec="lnorm",meanlog=log(nulast),sdlog=sdnu,a=anu,b=bnu)*dlnorm(sigmacand,log(sigmalast),sdsigma)
     #priorphilast=(dmvt(t(ycomp),mu=t(xbeta),S=Psilast,df=nulast,log=F)*reflast/(sigmalast^a))*dtrunc(nucand,spec="lnorm",meanlog=log(nulast),sdlog=sdnu,a=anu,b=bnu)*S2last*df(sigmacand,nulast,v)
@@ -1467,16 +1498,14 @@ else{
   }
 }
 
-##mudanca por marcos
 betaburn=as.matrix(betaF[(burn+1):iter,])
-betaval=as.matrix(betaburn[seq(from=1,to=(iter-burn),by=thin),])
+betaval=as.matrix(betaburn[seq((burn+1),iter-burn,thin),])
 phiburn=phiF[(burn+1):iter]
-phival=phiburn[seq(from=1,to=(iter-burn),by=thin)]
+phival=phiburn[seq((burn+1),iter-burn,thin)]
 sigmaburn=sigmaF[(burn+1):iter]
-sigmaval=sigmaburn[seq(from=1,to=(iter-burn),by=thin)]
+sigmaval=sigmaburn[seq((burn+1),iter-burn,thin)]
 nuburn=nuF[(burn+1):iter]
-nuval=nuburn[seq(from=1,to=iter-burn,by= thin)]
-
+nuval=nuburn[seq((burn+1),iter-burn,thin)]
 
 dist=cbind(betaval,sigmaval,phival,nuval)
 
@@ -1512,7 +1541,9 @@ theta=c(modebeta,modesigma,modephi,mediannu)
 
 
 
-return(list(prob=count/iter,dist=dist,betaF=betaval,sigmaF=sigmaval,phiF=phival,nuF=nuval,coords=coords,X=xmat,nugget=tau2,kappa=kappa,type=cov.model,theta=theta,y=ycomp))
+#return(list(prob=count/iter,dist=dist,betaF=betaval,sigmaF=sigmaval,phiF=phival,nuF=nuval,coords=coords,X=xmat,nugget=tau2,kappa=kappa,type=cov.model,theta=theta,y=ycomp))
+return(list(dist=dist,betaF=betaval,sigmaF=sigmaval,phiF=phival,nuF=nuval,coords=coords,X=xmat,nugget=tau2,kappa=kappa,type=cov.model,theta=theta,y=ycomp))
+
 }
 
 
@@ -1523,7 +1554,7 @@ return(list(prob=count/iter,dist=dist,betaF=betaval,sigmaF=sigmaval,phiF=phival,
 
 
 
-bayspaestTvag=function(candpar,method,xmat,y,coords,covini,nuini,tau2,kappa,cov.model,aphi,bphi,asigma,anu,bnu,burn,iter,thin){
+bayspaestTvag=function(candpar,method,xmat,y,coords,covini,nuini,tau2,kappa,cov.model,aphi,bphi,asigma,anu,bnu,sdnu,burn,iter,thin,cprop){
 
 p=ncol(xmat)
 n=nrow(xmat)
@@ -1548,10 +1579,19 @@ n=nrow(xmat)
 p=ncol(xmat)
 v=n-p
 
-phicand=runif(1,aphi,bphi)
-#phicand=rtrunc(1, spec="gamma",shape=phiF[j-1],scale=candpar,a=aphi,b=Inf)
+philast=phiF[j-1]
+aphiproplast = min(aphi,max(philast-cprop,aphi))
+bphiproplast = max(bphi,min(philast + cprop,bphi))
+
+phicand=runif(1,aphiproplast,bphiproplast)
+aphipropcand = min(aphi,max(aphi,phicand-cprop))
+bphipropcand = max(bphi,min(phicand + cprop,bphi))
+
+#phicand=rtrunc(1, spec="gamma",shape=phiF[j-1],scale=candpar,a=0,b=Inf)
 nulast=nuF[j-1]
-nucand=rtrunc(1,spec="exp",rate=1/nulast,a=anu,b=bnu)
+#nucand=rtrunc(1,spec="exp",rate=1/nulast,a=anu,b=bnu)
+nucand=rtrunc(1,spec="lnorm",meanlog=log(nulast),sdlog=sdnu,a=anu,b=bnu)
+#phicand=rtrunc(1, spec="gamma",shape=phiF[j-1],scale=candpar,a=aphi,b=Inf)
 last=c(sigmaF[j-1],phiF[j-1])
 
 Psilast=varcov.spatial(H=H,cov.model=cov.model,cov.pars=last,nugget=tau2,kappa=kappa)
@@ -1602,8 +1642,8 @@ detrlast=1e-323
 
 xbeta=xmat%*%betaF[j-1,]
 a=asigma
-#priorphicand=(dmvt(t(ycomp),mu=t(xbeta),S=Psicand,df=nucand,log=F)*refcand/(sigmacand^a))*dtrunc(nulast,spec="exp",rate=1/nulast,a=anu,b=bnu)*S2last*df(sigmalast,nulast,v)
-priorphicand=(dmvt(t(ycomp),mu=t(xbeta),S=Psicand,df=nucand,log=F)/(sigmacand^a))*S2last*df(sigmalast,nulast,n)
+#priorphicand=(dmvt(t(ycomp),mu=t(xbeta),S=Psicand,df=nucand,log=F)/(sigmacand^a))*S2last*df(sigmalast,nulast,v) *dunif(philast,aphipropcand,bphipropcand)*dtrunc(nulast,spec="exp",rate=1/nucand,a=anu,b=bnu)
+priorphicand=(dmvt(t(ycomp),mu=t(xbeta),S=Psicand,df=nucand,log=F)/(sigmacand^a))*S2last*df(sigmalast,nulast,n)*dunif(philast,aphipropcand,bphipropcand)*dtrunc(nulast,spec="lnorm",meanlog=log(nucand),sdlog=sdnu,a=anu,b=bnu)
 
 
 
@@ -1612,8 +1652,8 @@ priorphicand=1e-323
 }
 
 
-#priorphilast=(dmvt(t(ycomp),mu=t(xbeta),S=Psilast,df=nulast,log=F)*reflast/(sigmalast^a))*dtrunc(nucand,spec="exp",rate=1/nulast,a=anu,b=bnu)*S2cand*df(sigmacand,nucand,v)
-priorphilast=(dmvt(t(ycomp),mu=t(xbeta),S=Psilast,df=nulast,log=F)/(sigmalast^a))*S2last*df(sigmacand,nulast,n)
+#priorphilast=(dmvt(t(ycomp),mu=t(xbeta),S=Psilast,df=nulast,log=F)/(sigmalast^a))*S2last*df(sigmacand,nulast,v)*dunif(phicand,aphiproplast,bphiproplast)*dtrunc(nucand,spec="exp",rate=1/nulast,a=anu,b=bnu)
+priorphilast=(dmvt(t(ycomp),mu=t(xbeta),S=Psilast,df=nulast,log=F)/(sigmalast^a))*S2last*df(sigmacand,nulast,n)*dunif(phicand,aphiproplast,bphiproplast)*dtrunc(nucand,spec="lnorm",meanlog=log(nulast),sdlog=sdnu,a=anu,b=bnu)
 
 if(priorphilast<1e-323){
 priorphilast=1e-323
@@ -1661,15 +1701,14 @@ countiter=countiter+1
 cat("Iteration ",countiter," of ",iter,"\r")
 }
 
-##mudanca por marcos
 betaburn=as.matrix(betaF[(burn+1):iter,])
-betaval=as.matrix(betaburn[seq(from=1,to=(iter-burn),by=thin),])
+betaval=as.matrix(betaburn[seq((burn+1),iter-burn,thin),])
 phiburn=phiF[(burn+1):iter]
-phival=phiburn[seq(from=1,to=(iter-burn),by=thin)]
+phival=phiburn[seq((burn+1),iter-burn,thin)]
 sigmaburn=sigmaF[(burn+1):iter]
-sigmaval=sigmaburn[seq(from=1,to=(iter-burn),by=thin)]
+sigmaval=sigmaburn[seq((burn+1),iter-burn,thin)]
 nuburn=nuF[(burn+1):iter]
-nuval=nuburn[seq(from=1,to=iter-burn,by= thin)]
+nuval=nuburn[seq((burn+1),iter-burn,thin)]
 
 dist=cbind(betaval,sigmaval,phival,nuval)
 
@@ -1704,7 +1743,8 @@ theta=c(modebeta,modesigma,modephi,mediannu)
 
 
 
-return(list(prob=count/iter,dist=dist,betaF=betaval,sigmaF=sigmaval,phiF=phival,nuF=nuval,coords=coords,X=xmat,nugget=tau2,kappa=kappa,type=cov.model,theta=theta,y=ycomp))
+#return(list(prob=count/iter,dist=dist,betaF=betaval,sigmaF=sigmaval,phiF=phival,nuF=nuval,coords=coords,X=xmat,nugget=tau2,kappa=kappa,type=cov.model,theta=theta,y=ycomp))
+return(list(dist=dist,betaF=betaval,sigmaF=sigmaval,phiF=phival,nuF=nuval,coords=coords,X=xmat,nugget=tau2,kappa=kappa,type=cov.model,theta=theta,y=ycomp))
 }
 
 ###obj(tsroba)

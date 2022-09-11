@@ -1,5 +1,5 @@
-\name{nsrobapred}
-\alias{nsrobapred}
+\name{nsrobapred1}
+\alias{nsrobapred1}
 %- Also NEED an '\alias' for EACH other topic documented here.
 \title{
 Prediction under Normal Objective Bayesian Analysis (OBA).
@@ -8,7 +8,7 @@ Prediction under Normal Objective Bayesian Analysis (OBA).
 This function uses the sampling distribution of parameters obtained from the function \code{tsroba} to predict values at unknown locations.
 }
 \usage{
-nsrobapred(xpred, coordspred, obj)
+nsrobapred1(xpred, coordspred, obj)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -30,7 +30,7 @@ This function predicts using the sampling distribution of parameters obtained fr
 This function returns a vector with the predicted values at the specified locations.
 }
 \references{
-Berger, J.O,  De Oliveira, V. and Sans\'{o}, B. (2001). Objective Bayesian Analysis of Spatially Correlated Data. Journal of the American Statistical Association., 96, 1361 -- 1374.
+Berger, J.O,  De Oliveira, V. and Sanso, B. (2001). Objective Bayesian Analysis of Spatially Correlated Data. Journal of the American Statistical Association., 96, 1361 -- 1374.
 
 Diggle, P. and P. Ribeiro (2007).Model-Based Geostatistics.  Springer Series in Statistics.
 
@@ -56,7 +56,7 @@ ini.pars=c(10,3),intphi=c(0.8,10),iter=2,burn=0,thin=1)
 
 datapred1=dataelev[43:52,]
 coordspred1=datapred1[,1:2]
-nsrobapred(obj=reselev,coordspred=coordspred1,xpred=rep(1,10))
+nsrobapred1(obj=reselev,coordspred=coordspred1,xpred=rep(1,10))
 }
 
 
@@ -70,6 +70,6 @@ ini.pars=c(10,3),intphi=c(0.8,10))
 
 datapred1=dataelev[43:52,]
 coordspred1=datapred1[,1:2]
-nsrobapred(obj=reselev,coordspred=coordspred1,xpred=rep(1,10))
+nsrobapred1(obj=reselev,coordspred=coordspred1,xpred=rep(1,10))
 }
 }

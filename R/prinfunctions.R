@@ -45,7 +45,7 @@ return(priorcand)
 }
 else{
 
-if(class(trend)!="formula") if (!(trend %in% c("cte","1st","2nd"))) stop('trend must be (cte), (1st),(2nd) or a valid formula')
+if(!inherits(trend,'formula')) if (!(trend %in% c("cte","1st","2nd"))) stop('trend must be (cte), (1st),(2nd) or a valid formula')
 
 if (!(prior %in% c("reference","jef.rul","jef.ind"))) stop("Accepted priors: reference, jef.rul, jef.ind")
 
@@ -55,7 +55,7 @@ c2=coords[,2]
 if(trend=="cte") xmat=as.matrix(rep(1,dim(data)[1]))
 if(trend=="1st") xmat=model.matrix(~c1+c2)
 if(trend=="2nd") xmat= model.matrix(~ c1 + c2 + I(c1^2) + I(c2^2) + I(c1*c2))
-if(class(trend)=="formula") xmat=model.matrix(trend,data=data)
+if(inherits(trend,'formula')) xmat=model.matrix(trend,data=data)
 
 
 #############Looking for NA#####################
@@ -93,7 +93,7 @@ if(x[1]<0) stop("Range parameter must be a real number in [0,Inf)")
 if(prior=="vague") if(length(x)!=3) stop("x must be a numeric vector of length 3")
 if(prior %in% c("reference","jef.rul","jef.ind")) if(length(x)!=2) stop("x must be a numeric vector of length 2")
 
-if (class(formula)!="formula")  stop('The argument formula must be a valid formula')
+if (!inherits(formula,'formula'))  stop('The argument formula must be a valid formula')
 
 if (!(prior %in% c("reference","jef.rul","jef.ind","vague"))) stop("Accepted priors: reference, jef.rul, jef.ind")
 
@@ -203,13 +203,13 @@ priorcand=priorijefindnorm(x=x,sigma=sigma,H=H,kappa=kappa,cov.model=cov.model,t
 return(priorcand)
 }
 else{
-if(class(trend)!="formula") if (!(trend %in% c("cte","1st","2nd"))) stop('trend must be (cte), (1st),(2nd) or a valid formula')
+if(!inherits(trend,'formula')) if (!(trend %in% c("cte","1st","2nd"))) stop('trend must be (cte), (1st),(2nd) or a valid formula')
 c1=coords[,1]
 c2=coords[,2]
 if(trend=="cte") xmat=as.matrix(rep(1,dim(data)[1]))
 if(trend=="1st") xmat=model.matrix(~c1+c2)
 if(trend=="2nd") xmat= model.matrix(~ c1 + c2 + I(c1^2) + I(c2^2) + I(c1*c2))
-if(class(trend)=="formula") xmat=model.matrix(trend,data=data)
+if(inherits(trend,'formula')) xmat=model.matrix(trend,data=data)
 
 
 
@@ -245,7 +245,7 @@ if(!is.numeric(x)) stop("Range parameter must be a real number in [0,Inf)")
 if(x<0) stop("Range parameter must be a real number in [0,Inf)")
 if(length(x)!=1) stop("Range parameter must be a real number in [0,Inf)")
 
-if (class(formula)!="formula")  stop('The argument formula must be a valid formula')
+if (!inherits(formula,'formula'))  stop('The argument formula must be a valid formula')
 
 if (!(prior %in% c("reference","jef.rul","jef.ind","vague"))) stop("Accepted priors: reference, jef.rul, jef.ind")
 
@@ -313,7 +313,7 @@ intmT=function(formula,prior="reference",coords.col=1:2,kappa=0.5,cov.model="exp
   if(maxEval%%1 !=0 ) stop("maxEval must be a positive integer value")
   if(length(maxEval)!=1) stop("maxEval must be a positive integer value")
 
-  if (class(formula)!="formula")  stop('The argument formula must be a valid formula')
+  if (!inherits(formula,'formula'))  stop('The argument formula must be a valid formula')
 
   if (!(prior %in% c("reference","jef.rul","jef.ind","vague"))) stop("Accepted priors: reference, jef.rul, jef.ind")
 
@@ -332,13 +332,13 @@ intmT=function(formula,prior="reference",coords.col=1:2,kappa=0.5,cov.model="exp
   H=as.matrix(dist(coords,upper=T,diag=T))
 
   if(prior=="vague"){
-    if(class(intphi)=="character"){
+    if(inherits(intphi,'character')){
       if(intphi!="default") stop("A character different of 'default' is not allowed")
       if(cov.model=="spherical") stop("intphi argument must be specified for the spherical covariance case")
       distancias=unique(as.vector(H))
       bphi=try(find.phi(d=max(distancias),kappa=kappa,range=c(1e-04,100000),cut=0.05,cov.model=cov.model),silent=T)
       aphi=try(find.phi(d=min(distancias[distancias!=0]),kappa=kappa,range=c(1e-04,100000),cut=0.05,cov.model=cov.model),silent=T)
-      if (class(aphi)=="try-error" | class(bphi)=="try-error") stop("error in calculating intphi by default")
+      if (inherits(aphi,"try-error") | inherits(bphi,"try-error")) stop("error in calculating intphi by default")
     }else{
       if(!is.numeric(intphi)) stop("intphi must be a numeric 2 dimension vector")
       if(!is.vector(intphi)) stop("intphi must be a numeric 2 dimension vector")
@@ -402,7 +402,7 @@ if(maxEval<0) stop("maxEval must be a positive integer value")
 if(maxEval%%1 !=0 ) stop("maxEval must be a positive integer value")
 if(length(maxEval)!=1) stop("maxEval must be a positive integer value")
 
-if (class(formula)!="formula")  stop('The argument formula must be a valid formula')
+if (!inherits(formula,"formula"))  stop('The argument formula must be a valid formula')
 
 if (!(prior %in% c("reference","jef.rul","jef.ind","vague"))) stop("Accepted priors: reference, jef.rul, jef.ind")
 
@@ -461,7 +461,7 @@ return(intm)
 ############################################################################
 
 
-nsroba=function(formula,method="median",prior="reference",coords.col=1:2,kappa=0.5,cov.model="matern",data,asigma=2.1,intphi="default",ini.pars,burn=500,iter=5000,thin=10){
+nsroba=function(formula,method="median",prior="reference",coords.col=1:2,kappa=0.5,cov.model="matern",data,asigma=2.1,intphi="default",ini.pars,burn=500,iter=5000,thin=10,cprop = NULL){
 
 #xmat=xmat,proposal=proposal,candpar=candpar,prior=prior,asigma=asigma,y=y,coords=coordstot,covini=cov.ini,nuini=nuini,tau2=0,kappa=kappa,cov.model=cov.model,aphi=aphi,bphi=bphi,burn=burn,iter=iter,thin=thin
 
@@ -483,7 +483,7 @@ if(thin> iter) stop("thin cannot be greater than number of iterations")
 
 #if(proposal=="gamma") if(!is.numeric(candpar)) stop("candpar must be a numeric hyperparameter")
 
-if (class(formula)!="formula")  stop('The argument formula must be a valid formula')
+if (!inherits(formula,'formula'))  stop('The argument formula must be a valid formula')
 
 if (!(prior %in% c("reference","jef.rul","jef.ind","vague"))) stop("Accepted priors: reference, jef.rul, jef.ind")
 
@@ -503,16 +503,20 @@ H=as.matrix(dist(coords,upper=T,diag=T))
 
 
 #if(proposal=="unif"){
- if(class(intphi)=="character"){
+ if(inherits(intphi,'character')){
 if(intphi!="default") stop("A character different of 'default' is not allowed")
 if(cov.model=="spherical") stop("intphi argument must be specified for the spherical covariance case")
 distancias=unique(as.vector(H))
 bphi=try(find.phi(d=max(distancias),kappa=kappa,range=c(1e-04,100000),cut=0.05,cov.model=cov.model),silent=T)
 aphi=try(find.phi(d=min(distancias[distancias!=0]),kappa=kappa,range=c(1e-04,100000),cut=0.05,cov.model=cov.model),silent=T)
-if (class(aphi)=="try-error" | class(bphi)=="try-error") stop("error in calculating intphi by default")
+cprop = ifelse(is.null(cprop),bphi-aphi,cprop)
+if(!is.null(cprop) & !is.numeric(cprop)) stop('cprop must be a number greater than 0')
+if(cprop<0) stop('cprop must be a number greater than 0')
+
+if (inherits(aphi,'try-error')| inherits(bphi,'try-error')) stop("error in calculating intphi by default")
 }
 
-if(class(intphi)!="character"){
+if(!inherits(intphi,'character')){
 if(!is.numeric(intphi)) stop("intphi must be a numeric 2 dimension vector")
 if(!is.vector(intphi)) stop("intphi must be a numeric 2 dimension vector")
 if ( length(intphi)!=2) stop("A valid interval for the range parameter must be provided")
@@ -520,6 +524,9 @@ if(intphi[1]>intphi[2]) stop("Invalid interval for the range parameter")
 if(intphi[1]<=0 |intphi[2]<=0) stop("Range parameter is greater than 0")
 aphi=intphi[1]
 bphi=intphi[2]
+cprop = ifelse(is.null(cprop),bphi-aphi,cprop)
+if(!is.null(cprop) & !is.numeric(cprop)) stop('cprop must be a number greater than 0')
+if(cprop<0) stop('cprop must be a number greater than 0')
 }
 
 #}
@@ -554,7 +561,7 @@ tau2=0
 
 
 #if(proposal=="gamma") res=suppressWarnings(baysparefnorm(xmat=xmat,method=method,proposal=proposal,candpar=candpar,prior=prior,asigma=asigma,y=y,coords=coords,covini=ini.pars,tau2=0,kappa=kappa,cov.model=cov.model,aphi=aphi,bphi=bphi,burn=burn,iter=iter,thin=thin))
-res=suppressWarnings(baysparefnorm(xmat=xmat,method=method,prior=prior,asigma=asigma,y=y,coords=coords,covini=ini.pars,tau2=0,kappa=kappa,cov.model=cov.model,aphi=aphi,bphi=bphi,burn=burn,iter=iter,thin=thin))
+res=suppressWarnings(baysparefnorm(xmat=xmat,method=method,prior=prior,asigma=asigma,y=y,coords=coords,covini=ini.pars,tau2=0,kappa=kappa,cov.model=cov.model,aphi=aphi,bphi=bphi,burn=burn,iter=iter,thin=thin,cprop = cprop))
 res$formula=formula
 res$prior=prior
 #res$proposal=proposal
@@ -573,7 +580,7 @@ return(res)
 ############################################################################
 
 
-tsroba=function(formula,method="median",sdnu=1,prior="reference",coords.col=1:2,kappa=0.5,cov.model="matern",data,asigma=2.1,intphi="default",intnu="default",ini.pars,burn=500,iter=5000,thin=10){
+tsroba=function(formula,method="median",sdnu=1,prior="reference",coords.col=1:2,kappa=0.5,cov.model="matern",data,asigma=2.1,intphi="default",intnu="default",ini.pars,burn=500,iter=5000,thin=10,cprop = NULL){
 
 #xmat=xmat,proposal=proposal,candpar=candpar,prior=prior,asigma=asigma,y=y,coords=coordstot,covini=cov.ini,nuini=nuini,tau2=0,kappa=kappa,cov.model=cov.model,aphi=aphi,bphi=bphi,burn=burn,iter=iter,thin=thin
 
@@ -596,7 +603,7 @@ if(thin> iter) stop("thin cannot be greater than number of iterations")
 
 #if(proposal=="gamma") if(!is.numeric(candpar)) stop("candpar must be a numeric hyperparameter")
 
-if (class(formula)!="formula")  stop('The argument formula must be a valid formula')
+if (!inherits(formula,'formula'))  stop('The argument formula must be a valid formula')
 
 if (!(prior %in% c("reference","jef.rul","jef.ind","vague"))) stop("Accepted priors: reference, jef.rul, jef.ind")
 if (!(method %in% c("mean","median","mode"))) stop("Estimation methods: mean, median, mode")
@@ -614,16 +621,19 @@ if (!is.data.frame(data)) stop("data must be a data.frame")
 coords=data[,coords.col]
 H=as.matrix(dist(coords,upper=T,diag=T))
 
- if(class(intphi)=="character"){
+ if(inherits(intphi,'character')){
 if(intphi!="default") stop("A character different of 'default' is not allowed")
 if(cov.model=="spherical") stop("intphi argument must be specified for the spherical covariance case")
 distancias=unique(as.vector(H))
 bphi=try(find.phi(d=max(distancias),kappa=kappa,range=c(1e-04,100000),cut=0.05,cov.model=cov.model),silent=T)
 aphi=try(find.phi(d=min(distancias[distancias!=0]),kappa=kappa,range=c(1e-04,100000),cut=0.05,cov.model=cov.model),silent=T)
-if (class(aphi)=="try-error" | class(bphi)=="try-error") stop("error in calculating intphi by default")
+cprop = ifelse(is.null(cprop),bphi-aphi,cprop)
+if(!is.null(cprop) & !is.numeric(cprop)) stop('cprop must be a number greater than 0')
+if(cprop<0) stop('cprop must be a number greater than 0')
+if (inherits(aphi,'try-error') | inherits(bphi,'try-error')) stop("error in calculating intphi by default")
 }
 
-if(class(intphi)!="character"){
+if(!inherits(intphi,'character')){
 if(!is.numeric(intphi)) stop("intphi must be a numeric 2 dimension vector")
 if(!is.vector(intphi)) stop("intphi must be a numeric 2 dimension vector")
 if ( length(intphi)!=2) stop("A valid interval for the range parameter must be provided")
@@ -631,16 +641,19 @@ if(intphi[1]>intphi[2]) stop("Invalid interval for the range parameter")
 if(intphi[1]<=0 |intphi[2]<=0) stop("Range parameter is greater than 0")
 aphi=intphi[1]
 bphi=intphi[2]
+cprop = ifelse(is.null(cprop),bphi-aphi,cprop)
+if(!is.null(cprop) & !is.numeric(cprop)) stop('cprop must be a number greater than 0')
+if(cprop<0) stop('cprop must be a number greater than 0')
 }
 
 
-if(class(intnu)=="character"){
+if(inherits(intnu,'character')){
 if(intnu!="default") stop("A character different of 'default' is not allowed")
 anu=4
 bnu=30
 }
 
-if(class(intnu)!="character"){
+if(!inherits(intnu,'character')){
 if(!is.numeric(intnu)) stop("intnu must be a numeric 2 dimension vector")
 if(!is.vector(intnu)) stop("intnu must be a numeric 2 dimension vector")
 if ( length(intnu)!=2) stop("A valid interval for the range parameter must be provided")
@@ -674,9 +687,9 @@ tau2=0
 
 p=ncol(xmat)
 anujef=max(4,p)
-if(prior=="reference")  res=suppressWarnings(bayspaestT1(xmat=xmat,method=method,y=y,coords=coords,covini=ini.pars[1:2],nuini=ini.pars[3],tau2=0,kappa=kappa,cov.model=cov.model,aphi=aphi,bphi=bphi,anu=anu,bnu=bnu,burn=burn,iter=iter,thin=thin))
-if(prior=="jef.rul"| prior=="jef.ind") res=suppressWarnings(bayspaestTjef(xmat=xmat,prior=prior,method=method,sdnu=sdnu,y=y,coords=coords,covini=ini.pars[1:2],nuini=ini.pars[3],tau2=0,kappa=kappa,cov.model=cov.model,aphi=aphi,bphi=bphi,anu=anujef,bnu=bnu,burn=burn,iter=iter,thin=thin))
-if(prior=="vague")   res= suppressWarnings(bayspaestTvag(xmat=xmat,asigma=asigma,y=y,method=method,coords=coords,covini=ini.pars[1:2],nuini=ini.pars[3],tau2=0,kappa=kappa,cov.model=cov.model,aphi=aphi,bphi=bphi,anu=anu,bnu=bnu,burn=burn,iter=iter,thin=thin))
+if(prior=="reference")  res=suppressWarnings(bayspaestT1(xmat=xmat,method=method,y=y,coords=coords,covini=ini.pars[1:2],nuini=ini.pars[3],tau2=0,kappa=kappa,cov.model=cov.model,aphi=aphi,bphi=bphi,anu=anu,bnu=bnu,burn=burn,iter=iter,thin=thin,cprop=cprop))
+if(prior=="jef.rul"| prior=="jef.ind") res=suppressWarnings(bayspaestTjef(xmat=xmat,prior=prior,method=method,sdnu=sdnu,y=y,coords=coords,covini=ini.pars[1:2],nuini=ini.pars[3],tau2=0,kappa=kappa,cov.model=cov.model,aphi=aphi,bphi=bphi,anu=anujef,bnu=bnu,burn=burn,iter=iter,thin=thin,cprop=cprop))
+if(prior=="vague")   res= suppressWarnings(bayspaestTvag(xmat=xmat,asigma=asigma,y=y,method=method,coords=coords,sdnu = sdnu, covini=ini.pars[1:2],nuini=ini.pars[3],tau2=0,kappa=kappa,cov.model=cov.model,aphi=aphi,bphi=bphi,anu=anu,bnu=bnu,burn=burn,iter=iter,thin=thin,cprop=cprop))
 
 
 #if(prior=="jef.ind") warning("The intercept was not considered for the X matrix (improper posterior)")
@@ -689,7 +702,7 @@ return(res)
 
 
 tsrobapred=function(obj,xpred,coordspred){
-  if(class(obj)!="tsroba") stop ("Argument obj must be of class tsroba")
+  if(!inherits(obj,'tsroba')) stop ("Argument obj must be of class tsroba")
   if(!is.numeric(xpred) & !is.data.frame(xpred)) stop ("xpred must be a numeric matrix or data.frame")
   if(!is.numeric(coordspred) & !is.data.frame(coordspred)) stop ("coordspred must be a numeric matrix or data.frame")
   if (!is.matrix(xpred)) xpred=as.matrix(xpred)
@@ -711,14 +724,14 @@ tsrobapred=function(obj,xpred,coordspred){
 }
 
 
-nsrobapred=function(xpred,coordspred,obj){
+nsrobapred1=function(xpred,coordspred,obj){
   if(!is.numeric(xpred) & !is.data.frame(xpred)) stop ("xpred must be a numeric matrix or data.frame")
   if(!is.numeric(coordspred) & !is.data.frame(coordspred)) stop ("coordspred must be a numeric matrix or data.frame")
   if (!is.matrix(xpred)) xpred=as.matrix(xpred)
   if (!is.matrix(coordspred)) as.matrix(coordspred)
   if(ncol(coordspred)!=2) stop("2D coordinates must be specified")
   if(nrow(xpred)!=nrow(coordspred)) stop("xpred does not have the same number of lines than coordspred")
-  if(class(obj)!="nsroba") stop("an object of the class nsroba must be provided")
+  if(!inherits(obj,'nsroba')) stop("an object of the class nsroba must be provided")
 
   if(sum(is.na(xpred)) > 0) stop("There are some NA values in xpred")
   if(sum(is.na(coordspred)) > 0) stop("There are some NA values in coordspred")
@@ -734,7 +747,7 @@ nsrobapred=function(xpred,coordspred,obj){
 
 
 summary.nsroba=function(object, ...){
-  if(class(object)!="nsroba")  stop("an object of class nsroba  must be provided")
+  if(!inherits(object,'nsroba'))  stop("an object of class nsroba  must be provided")
     cat('\n')
     call <- match.call()
     cat("Call:\n")
@@ -773,7 +786,7 @@ summary.nsroba=function(object, ...){
 
 
   summary.tsroba=function(object, ...){
-    if(class(object)!="tsroba")  stop("an object of class tsroba  must be provided")
+    if(!inherits(object,'tsroba'))  stop("an object of class tsroba  must be provided")
   #Running the algorithm
   cat('\n')
   call <- match.call()
